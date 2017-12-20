@@ -99,3 +99,12 @@ ENV/
 
 # mypy
 .mypy_cache/
+/.ptp-sync/
+
+# Eclipse setting and PTP sync directory
+.project
+.pydevproject
+.settings/
+.ptp-sync/
+.ptp-sync-folder
+src/.ptp-sync-folder
