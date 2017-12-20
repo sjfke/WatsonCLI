@@ -3,7 +3,7 @@
 from ConfigParser import SafeConfigParser
 
 config = SafeConfigParser()
-config.read('config.ini')
+config.read('.watson.cfg')
 
 import json
 from watson_developer_cloud import NaturalLanguageUnderstandingV1
