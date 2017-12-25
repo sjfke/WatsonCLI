@@ -1,8 +1,7 @@
 # WatsonCLI
 Collection of Python command line utilities for interacting with Watson Bluemix
 
-## Natural Language
-
+## Natural Language (REST)
 ```shell-session
 usage: nlu-rest-api.py [-h] [-c CFG] [-f FEATURES] [-F FILENAME] [-u URL]
                        [-j JSON] [-v]
@@ -19,7 +18,9 @@ optional arguments:
   -u URL, --url URL     URL to analyze
   -j JSON, --json JSON  JSON parameters
   -v, --verbose
-  
+```
+## Natural Language (SDK)
+```shell-session
 usage: nlu-sdk.py [-h] [-v] [-c CFG]
 
 Simple NLU Category example
