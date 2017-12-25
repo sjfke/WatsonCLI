@@ -29,7 +29,7 @@ def call_watson_nlu(cfg):
 
 if __name__ == "__main__":
     watson_cfg_file = os.path.join(os.getcwd(), '.watson.cfg')
-    parser = argparse.ArgumentParser(description='Simple NLU Category example')
+    parser = argparse.ArgumentParser(description='NLU SDK interface')
     parser.add_argument('-v', '--verbose', action='count', default=0)
     parser.add_argument('-c', '--cfg', default=watson_cfg_file, help='Watson credentials')
     args = parser.parse_args()
