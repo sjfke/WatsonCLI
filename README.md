@@ -19,4 +19,13 @@ optional arguments:
   -u URL, --url URL     URL to analyze
   -j JSON, --json JSON  JSON parameters
   -v, --verbose
+  
+usage: nlu-sdk.py [-h] [-v] [-c CFG]
+
+Simple NLU Category example
+
+optional arguments:
+  -h, --help         show this help message and exit
+  -v, --verbose
+  -c CFG, --cfg CFG  Watson credentials
 ```
