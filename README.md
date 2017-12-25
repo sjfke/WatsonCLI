@@ -6,7 +6,7 @@ Collection of Python command line utilities for interacting with Watson Bluemix
 usage: nlu-rest-api.py [-h] [-c CFG] [-f FEATURES] [-F FILENAME] [-u URL]
                        [-j JSON] [-v]
 
-Simple NLU Category example
+NLU REST interface
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -23,7 +23,16 @@ optional arguments:
 ```shell-session
 usage: nlu-sdk.py [-h] [-v] [-c CFG]
 
-Simple NLU Category example
+NLU SDK interface
+
+optional arguments:
+  -h, --help         show this help message and exit
+  -v, --verbose
+  -c CFG, --cfg CFG  Watson credentials
+[osboxes@osboxes src]$ ./nlu-sdk.py -h
+usage: nlu-sdk.py [-h] [-v] [-c CFG]
+
+NLU SDK interface
 
 optional arguments:
   -h, --help         show this help message and exit
