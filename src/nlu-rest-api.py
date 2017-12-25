@@ -1,11 +1,23 @@
 #!/usr/bin/env python
 #
 import argparse
-import sys
 import os
+import sys
 
 
 def simple_nlu_analyse(cfg, features, url='www.ibm.com', filename=None):
+    """ Perform NLU Analysis based on CLI options (REST + get)
+    
+        Args:
+            cfg (str): Configuration file with Watson credentials
+            url (str): URL to analyze
+            filename (str): File to analyze.
+            
+        Returns:
+            str: JSON results
+             
+    """
+
     import json
     import requests
     from ConfigParser import SafeConfigParser
@@ -29,25 +41,25 @@ def simple_nlu_analyse(cfg, features, url='www.ibm.com', filename=None):
             
         print('Request: ' + r.url)
 
-    #print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-    print(r.text)
-    return
+    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
+    # print(r.text)
+    return r.text
 
-def cleanse_features(str):
-    """ Method to return only valid Watson features (allowed)
+def cleanse_features(feature_str):
+    """ Return only valid Watson features
         
         Args:
-            string (str): feature string to check
+            feature_str (str): feature string to check
             
         Returns:
-            string: a cleansed string
+            str: a cleansed or default string
     """
     
     allowed = set(['entities', 'keywords', 'concepts', 'emotion', 'metadata', 'relations', 'semantic_roles', 'sentiment'])
     result_str = 'sentiment,keywords'
 
-    if str:
-        features = str.split(',')
+    if feature_str:
+        features = feature_str.split(',')
         matched = []
         
         for feature in features:
@@ -56,13 +68,27 @@ def cleanse_features(str):
               
         if len(matched) >= 1:  
             result_str = ','.join(matched)
+        else:
+            print "Warning: Using Default Features '{0}'".format(result_str)
+
 
     if args.verbose >= 1:
         print 'result_str: ' + result_str
 
     return result_str
 
-def nlu_json_analyse(cfg, url='www.ibm.com', filename=None):
+def nlu_json_analyse(cfg, url=None, json_file=None):
+    """ Perform NLU Analysis based on JSON file (REST + post)
+    
+        Args:
+            cfg (str): Configuration file with Watson credentials
+            url (str): URL to analyze (overides any in JSON file)
+            json_file (str): Analysis Query in JSON format
+            
+        Returns:
+            str: JSON results
+             
+    """
     import json
     import requests
     from ConfigParser import SafeConfigParser
@@ -70,24 +96,24 @@ def nlu_json_analyse(cfg, url='www.ibm.com', filename=None):
     config = SafeConfigParser()
     config.read(cfg)
     
-    if filename is None:
-        sys.stderr.write('Missing filename' + '\n')
+    if json_file is None:
+        print('Missing JSON file')
         sys.exit(1)
         
-    with open (filename, 'r') as f:
+    with open (json_file, 'r') as f:
         try:
             data = json.load(f)
         except ValueError as e:
-            print "{0}:".format(filename)
+            print "{0}:".format(json_file)
             print "   ValueError: {0}".format(e)
             sys.exit(1)
         except:
-            print "{0}:".format(filename)
+            print "{0}:".format(json_file)
             print "   Unexpected error: ", sys.exc_info()[0]
             sys.exit(1)
             
     if not data:
-        print "{0}:".format(filename)
+        print "{0}:".format(json_file)
         print "   File has no JSON content"
         sys.exit(1)
 
@@ -98,12 +124,12 @@ def nlu_json_analyse(cfg, url='www.ibm.com', filename=None):
     
     r = requests.post(api, json=data, auth=(wuser, wpass))
     if args.verbose >= 1:
-        print('File: ' + filename)
+        print('File: ' + json_file)
         print('Request: ' + r.url)
 
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-    print(r.text)
-    return
+    # print(r.text)
+    return r.text
 
 
 if __name__ == "__main__":
@@ -120,9 +146,11 @@ if __name__ == "__main__":
         print "watson-cfg: " + args.cfg
 
     if args.json:
-        nlu_json_analyse(cfg=args.cfg, url=args.url, filename=args.json)
+        result = nlu_json_analyse(cfg=args.cfg, url=args.url, json_file=args.json)
+        print result
     else:
         features = cleanse_features(args.features)
-        simple_nlu_analyse(cfg=args.cfg, url=args.url, filename=args.filename, features=features)
+        result = simple_nlu_analyse(cfg=args.cfg, url=args.url, filename=args.filename, features=features)
+        print result
 
     sys.exit(0)
