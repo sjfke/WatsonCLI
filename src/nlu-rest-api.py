@@ -147,7 +147,7 @@ def nlu_json_analyse(cfg, url=None, json_file=None, text_file=None):
 
 if __name__ == "__main__":
     watson_cfg_file = os.path.join(os.getcwd(), '.watson.cfg')
-    parser = argparse.ArgumentParser(description='Simple NLU Category example')
+    parser = argparse.ArgumentParser(description='NLU REST interface')
     parser.add_argument('-c', '--cfg', default=watson_cfg_file, help='Watson credentials')
     parser.add_argument('-f', '--features', default='sentiment,keywords', help='Watson features')
     parser.add_argument('-F', '--filename', default=None, help='text file to analyze')
