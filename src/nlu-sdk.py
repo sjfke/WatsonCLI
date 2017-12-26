@@ -15,9 +15,9 @@ def call_watson_nlu(cfg):
     config.read(cfg)
 
     natural_language_understanding = NaturalLanguageUnderstandingV1(
-      username=config.get('watson', 'username'),
-      password=config.get('watson', 'password'),
-      version=config.get('watson', 'version'))
+      username=config.get('nlu', 'username'),
+      password=config.get('nlu', 'password'),
+      version=config.get('nlu', 'version'))
     
     response = natural_language_understanding.analyze(
       url='www.ibm.com',

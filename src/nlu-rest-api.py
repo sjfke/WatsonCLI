@@ -30,7 +30,7 @@ def nlu_get_analyze(cfg, features, url=None, text_file=None):
         print('Missing url of text_file')
         sys.exit(1)
 
-    payload = {'version': config.get('watson', 'version'), 'features': features}
+    payload = {'version': config.get('nlu', 'version'), 'features': features}
 
     if text_file:
         ## TODO - load file and add to 'text'
@@ -54,8 +54,8 @@ def nlu_get_analyze(cfg, features, url=None, text_file=None):
     # "https://gateway.watsonplatform.net/natural-languag-understanding/api/v1/analyze?version=2017-02-27&url=www.ibm.com&features=sentiment,keywords"
     # request.get('https://api.github.com/user/', auth=('user', 'pass'))
     api = "https://gateway.watsonplatform.net/natural-language-understanding/api/v1/analyze"
-    wuser = config.get('watson', 'username')
-    wpass = config.get('watson', 'password')
+    wuser = config.get('nlu', 'username')
+    wpass = config.get('nlu', 'password')
 
     r = requests.get(api, params=payload, auth=(wuser, wpass))
     if args.verbose >= 1:
@@ -170,9 +170,9 @@ def nlu_post_analyze_json(cfg, url=None, json_file=None, text_file=None):
             del data['html']
         
     api = "https://gateway.watsonplatform.net/natural-language-understanding/api/v1/analyze"
-    wuser = config.get('watson', 'username')
-    wpass = config.get('watson', 'password')
-    data['version'] = config.get('watson', 'version')
+    wuser = config.get('nlu', 'username')
+    wpass = config.get('nlu', 'password')
+    data['version'] = config.get('nlu', 'version')
     
     r = requests.post(api, json=data, auth=(wuser, wpass))
     if args.verbose >= 1:
