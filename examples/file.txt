@@ -1,0 +1,1 @@
+Access tokens are obtained when your app registers and a user logs in with the facebook api graph. If you're writing an app of some sort, you can get the access token from there and copy that over. I don't believe there's a way to get an access token another way. Here's the doc, you might find something in there developers.facebook.com/docs/facebook-login/access-tokens
