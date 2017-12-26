@@ -2,16 +2,17 @@
 #
 import argparse
 import os
+import re
 import sys
 
 
-def simple_nlu_analyse(cfg, features, url='www.ibm.com', filename=None):
+def nlu_get_analyze(cfg, features, url=None, text_file=None):
     """ Perform NLU Analysis based on CLI options (REST + get)
     
         Args:
             cfg (str): Configuration file with Watson credentials
             url (str): URL to analyze
-            filename (str): File to analyze.
+            text_file (str): File to analyze.
             
         Returns:
             str: JSON results
@@ -25,19 +26,43 @@ def simple_nlu_analyse(cfg, features, url='www.ibm.com', filename=None):
     config = SafeConfigParser()
     config.read(cfg)
 
+    if not url and not text_file:
+        print('Missing url of text_file')
+        sys.exit(1)
+
+    payload = {'version': config.get('watson', 'version'), 'features': features}
+
+    if text_file:
+        ## TODO - load file and add to 'text'
+        with open(text_file, 'r') as f:
+            text_str = f.read()
+           
+        if text_str and re.match('DOCTYPE', text_str, re.IGNORECASE):
+            payload['html'] = text_str
+        elif text_str:
+            payload['text'] = text_str
+        
+    if url:
+        # url and (html|text) are mutually exclusive
+        payload['url'] = url
+        if 'text' in payload:
+            del payload['text']
+        if 'html' in payload:
+            del payload['html']
+
     # curl --user "watson-user":"watson-password"\
     # "https://gateway.watsonplatform.net/natural-languag-understanding/api/v1/analyze?version=2017-02-27&url=www.ibm.com&features=sentiment,keywords"
     # request.get('https://api.github.com/user/', auth=('user', 'pass'))
     api = "https://gateway.watsonplatform.net/natural-language-understanding/api/v1/analyze"
     wuser = config.get('watson', 'username')
     wpass = config.get('watson', 'password')
-    payload = {'version': config.get('watson', 'version'), 'url': url, 'features': features}
+
     r = requests.get(api, params=payload, auth=(wuser, wpass))
     if args.verbose >= 1:
-        if filename is None:
+        if text_file is None:
             print('URL: ' + url)
         else:
-            print('File: ' + filename)
+            print('File: ' + text_file)
             
         print('Request: ' + r.url)
 
@@ -77,7 +102,7 @@ def cleanse_features(feature_str):
 
     return result_str
 
-def nlu_json_analyse(cfg, url=None, json_file=None, text_file=None):
+def nlu_post_analyze_json(cfg, url=None, json_file=None, text_file=None):
     """ Perform NLU Analysis based on JSON file (REST + post)
     
         Args:
@@ -119,16 +144,30 @@ def nlu_json_analyse(cfg, url=None, json_file=None, text_file=None):
         sys.exit(1)
 
     if text_file:
-        # url and text are mutually exclusive
-        data['text'] = text_file
+        ## TODO - load file and add to 'text'
+        with open(text_file, 'r') as f:
+            text_str = f.read()
+           
+        if text_str and re.match('DOCTYPE', text_str, re.IGNORECASE):
+            data['html'] = text_str
+            if 'text' in data:
+                del data['text']
+        elif text_str:
+            data['text'] = text_str
+            if 'html' in data:
+                del data['html']
+            
+        # url and (html|text) are mutually exclusive
         if 'url' in data:
             del data['url']
         
     if url:
-        # url and text are mutually exclusive
+        # url and (html|text) are mutually exclusive
         data['url'] = url
         if 'text' in data:
             del data['text']
+        if 'html' in data:
+            del data['html']
         
     api = "https://gateway.watsonplatform.net/natural-language-understanding/api/v1/analyze"
     wuser = config.get('watson', 'username')
@@ -159,18 +198,11 @@ if __name__ == "__main__":
         print "watson-cfg: '{0}'".format(args.cfg)
 
     if args.json:
-        result = nlu_json_analyse(cfg=args.cfg, url=args.url, json_file=args.json, text_file=args.filename)
+        result = nlu_post_analyze_json(cfg=args.cfg, url=args.url, json_file=args.json, text_file=args.filename)
         print result
     else:
-        features = cleanse_features(args.features) # may enforce default 'sentiment,keywords'
-        
-        # set default if no URL
-        if not args.url:
-            url_str = 'www.ibm.com'
-        else:
-            url_str = args.url
-
-        result = simple_nlu_analyse(cfg=args.cfg, url=url_str, filename=args.filename, features=features)
+        features = cleanse_features(args.features) # may enforce default 'sentiment,keywords'        
+        result = nlu_get_analyze(cfg=args.cfg, url=args.url, text_file=args.filename, features=features)
         print result
 
     sys.exit(0)

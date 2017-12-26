@@ -108,3 +108,4 @@ ENV/
 .ptp-sync/
 .ptp-sync-folder
 src/.ptp-sync-folder
+src/.watson.cfg
