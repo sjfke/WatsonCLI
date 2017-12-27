@@ -58,30 +58,112 @@ def list_environments(credentials):
 
 
 def list_configurations(credentials,envid):
-    pass
+    """ Return Watson Discovery Configurations
+
+        Args:
+            credentials (dictionary): Watson credentials
+            envid (str): Watson environment_id
+
+        Returns:
+            str: JSON results
+
+    """
+
+    return "list_configurations({0},{1})".format(credentials,envid)
 
 
 def list_collections(credentials,envid):
-    pass
+    """ Return Watson Discovery Collections
+
+        Args:
+            credentials (dictionary): Watson credentials
+            envid (str): Watson environment_id
+
+        Returns:
+            str: JSON results
+
+    """
+
+    return "list_collections({0},{1})".format(credentials,envid)
 
 
 def list_documents(credentials,envid,colid):
-    pass
+    """ Return Watson Discovery Documents
+
+        Args:
+            credentials (dictionary): Watson credentials
+            envid (str): Watson environment_id
+            colid (str): Watson collection_id
+
+        Returns:
+            str: JSON results
+
+    """
+
+    return "list_documents({0},{1},{2})".format(credentials,envid,colid)
 
 
 def list_environment(credentials,envid):
-    pass
+    """ Return Watson Discovery Environment Details
+
+        Args:
+            credentials (dictionary): Watson credentials
+            envid (str): Watson environment_id
+
+        Returns:
+            str: JSON results
+
+    """
+
+    return "list_environment({0},{1})".format(credentials,envid)
 
 
-def list_configurations(credentials,envid,cfgid):
-    pass
+def list_configuration(credentials,envid,cfgid):
+    """ Return Watson Discovery Configuration Details
+
+        Args:
+            credentials (dictionary): Watson credentials
+            envid (str): Watson environment_id
+            cfgid (str): Watson configuration_id
+
+        Returns:
+            str: JSON results
+
+    """
+
+    return "list_configuration({0},{1},{2})".format(credentials,envid,cfgid)
 
 
 def list_collection(credentials,envid,colid):
-    pass
+    """ Return Watson Discovery Collection Details
+
+        Args:
+            credentials (dictionary): Watson credentials
+            envid (str): Watson environment_id
+            colid (str): Watson collection_id
+
+        Returns:
+            str: JSON results
+
+    """
+
+    return "list_collection({0},{1},{2})".format(credentials,envid,colid)
 
 def list_document(credentials,envid,colid,docid):
-    pass
+    """ Return Watson Discovery Document Details
+
+        Args:
+            credentials (dictionary): Watson credentials
+            envid (str): Watson environment_id
+            colid (str): Watson collection_id
+            docid (str): Watson document_id
+
+        Returns:
+            str: JSON results
+
+    """
+
+    return "list_document({0},{1},{2},{3})".format(credentials,envid,colid,docid)
 
 
 def list_environments(cred):
@@ -273,25 +355,44 @@ if __name__ == "__main__":
             print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.list)
             sys.exit(1)
         
-        list_lower = args.list.lower() 
-        if list_lower == 'environments':
-            list_environments(credentials=credentials)
-        elif list_lower == 'configurations':
-            list_configurations(credentials=credentials,envid=args.envid)
-        elif list_lower == 'collections':
-            list_collections(credentials=credentials,envid=args.envid)
-        elif list_lower == 'documents':
-            list_document(credentials=credentials,envid=args.envid,colid=args.colid)
-        if list_lower == 'environment':
-            list_environment(credentials=credentials,envid=args.envid)
-        elif list_lower == 'configuration':
-            list_configuration(credentials=credentials,envid=args.envid,cfgid=args.cfgid)
-        elif list_lower == 'collection':
-            list_collection(credentials=credentials,envid=args.envid,colid=args.colid)
-        elif list_lower == 'document':
-            list_document(credentials=credentials,envid=args.envid,colid=args.colid,docid=args.docid)
+        list_lower = args.list.lower()
+        
+        if args.envid < len(envids):
+            envid = envids[args.envid]
         else:
-            pass
+            print "Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0])
+            sys.exit(1)
+
+        if list_lower == 'environments':
+            result=list_environments(credentials=credentials)
+            print result
+        elif list_lower == 'configurations':
+            result=list_configurations(credentials=credentials,envid=envid)
+            print result
+        elif list_lower == 'collections':
+            result=list_collections(credentials=credentials,envid=envid)
+            print result
+        elif list_lower == 'documents':
+            result=list_documents(credentials=credentials,envid=envid,colid=args.colid)
+            print result
+        elif list_lower == 'environment':
+            result=list_environment(credentials=credentials,envid=envid)
+            print result
+        elif list_lower == 'configuration':
+            result=list_configuration(credentials=credentials,envid=envid,cfgid=args.cfgid)
+            print result
+        elif list_lower == 'collection':
+            result=list_collection(credentials=credentials,envid=envid,colid=args.colid)
+            print result
+        elif list_lower == 'document':
+            result=list_document(credentials=credentials,envid=envid,colid=args.colid,docid=args.docid)
+            print result
+        else:
+            print "Error: invalid List option, '{0}'".format(args.list)
+            sys.exit(1)
+            
+        sys.exit(0)
+        
         result = list_environments_summary(cred=credentials)
         for i, val in enumerate(result):
             print "{0}: id={1[id]}; name={1[name]}; descr={1[descr]};".format(i, val)
