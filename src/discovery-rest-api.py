@@ -4,9 +4,10 @@ import argparse
 import os
 import re
 import sys
+import json
+import requests
 
-
-def get_watson_credentials(cfg):
+def get_watson_credentials(filename):
     """ Return a List of Watson Discovery Environments
 
         Args:
@@ -17,16 +18,70 @@ def get_watson_credentials(cfg):
 
     """
 
+    if not os.access(filename, os.R_OK):
+        print "Error: reading Watson credentials file '{0}: ".format(filename)
+        sys.exit(1)
+        
     from ConfigParser import SafeConfigParser
 
     config = SafeConfigParser()
-    config.read(cfg)
+    config.read(filename)
     result = {}
     result['username'] = config.get('discovery', 'username')
     result['password'] = config.get('discovery', 'password')
     result['version'] = config.get('discovery', 'version')
 
     return result
+
+def list_environments(credentials):
+    """ Return Watson Discovery Environments
+
+        Args:
+            credentials (dictionary): Watson credentials
+
+        Returns:
+            str: JSON results
+
+    """
+
+    api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
+    payload = {}
+    payload['version'] = credentials['version']
+
+    r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
+    if args.verbose >= 1:
+        print('Request: ' + r.url)
+
+    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
+    # print(r.text)
+    return r.text
+
+
+def list_configurations(credentials,envid):
+    pass
+
+
+def list_collections(credentials,envid):
+    pass
+
+
+def list_documents(credentials,envid,colid):
+    pass
+
+
+def list_environment(credentials,envid):
+    pass
+
+
+def list_configurations(credentials,envid,cfgid):
+    pass
+
+
+def list_collection(credentials,envid,colid):
+    pass
+
+def list_document(credentials,envid,colid,docid):
+    pass
 
 
 def list_environments(cred):
@@ -189,22 +244,54 @@ def delete_discovery_environment(cred, envid):
 if __name__ == "__main__":
     watson_cfg_file = os.path.join(os.getcwd(), '.watson.cfg')
     parser = argparse.ArgumentParser(description='Discovery REST interface')
-    parser.add_argument('-C', '--create-environment', help='Create Discovery environment')
+    parser.add_argument('-C', '--create', help='(environment|collection)')
+    parser.add_argument('-D', '--delete', help='(environment|configuration|collection|document)')
+    parser.add_argument('-L', '--list', help='(environment[s]|configuration[s]|collection[s]|document[s])')
+    parser.add_argument('-U', '--update', help='(environment|configuration|collection|document)')
     parser.add_argument('-d', '--description', default=None, help='description for create command')
-    parser.add_argument('-D', '--delete', type=int, default=-1, help='environment index')
-    parser.add_argument('-c', '--cfg', default='.watson.cfg', help='Watson credentials')
-    parser.add_argument('-e', '--environment', type=int, default=-1, help='environment index')
-    parser.add_argument('-l', '--list', help='indexed list environments', action='store_true')
+    parser.add_argument('-n', '--name', default=None, help='name for create command')
+    parser.add_argument('--envid', type=int, default=-1, help='environment index')
+    parser.add_argument('--cfgid', type=int, default=-1, help='configuration index')
+    parser.add_argument('--colid', type=int, default=-1, help='collection index')
+    parser.add_argument('--docid', type=int, default=-1, help='document index')
+    parser.add_argument('-a', '--auth', default='.watson.cfg', help='Watson credentials')
     parser.add_argument('-v', '--verbose', action='count', default=0)
     args = parser.parse_args()
     if args.verbose >= 1:
-        print "watson-cfg: '{0}'".format(args.cfg)
+        print "watson-cfg: '{0}'".format(args.auth)
 
-    credentials = get_watson_credentials(args.cfg)
+    credentials = get_watson_credentials(args.auth)
     envids = get_environment_ids(cred=credentials)
 
+    create_allowed = set(['environment', 'collection'])
+    delete_allowed = set(['environment', 'configuration', 'collection', 'document'])
+    list_allowed = ['environments', 'configurations', 'collections', 'documents', 'environment', 'configuration', 'collection', 'document']
+    delete_allowed = set(['environment', 'configuration', 'collection', 'document'])
+
     if args.list:
-        # print list_environments(cred=credentials)
+        if not (args.list.lower() in list_allowed):
+            print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.list)
+            sys.exit(1)
+        
+        list_lower = args.list.lower() 
+        if list_lower == 'environments':
+            list_environments(credentials=credentials)
+        elif list_lower == 'configurations':
+            list_configurations(credentials=credentials,envid=args.envid)
+        elif list_lower == 'collections':
+            list_collections(credentials=credentials,envid=args.envid)
+        elif list_lower == 'documents':
+            list_document(credentials=credentials,envid=args.envid,colid=args.colid)
+        if list_lower == 'environment':
+            list_environment(credentials=credentials,envid=args.envid)
+        elif list_lower == 'configuration':
+            list_configuration(credentials=credentials,envid=args.envid,cfgid=args.cfgid)
+        elif list_lower == 'collection':
+            list_collection(credentials=credentials,envid=args.envid,colid=args.colid)
+        elif list_lower == 'document':
+            list_document(credentials=credentials,envid=args.envid,colid=args.colid,docid=args.docid)
+        else:
+            pass
         result = list_environments_summary(cred=credentials)
         for i, val in enumerate(result):
             print "{0}: id={1[id]}; name={1[name]}; descr={1[descr]};".format(i, val)
@@ -217,7 +304,7 @@ if __name__ == "__main__":
         else:
             print "invalid index, '{0:d}' # try: {1} --list".format(args.environment, sys.argv[0])
             sys.exit(1)
-    elif args.create:
+    elif args.create_environment:
         create_discovery_environment(cred=credentials, name=args.create, descr=args.description)
     elif args.delete and args.delete >= 0:
         if args.environment < len(envids):
@@ -227,7 +314,7 @@ if __name__ == "__main__":
         else:
             print "invalid index, '{0:d}' # try: {1} --list".format(args.environment, sys.argv[0])
             sys.exit(1)
-        
+
     else:
         print "bugger"
         result = get_environment_ids(credentials)
