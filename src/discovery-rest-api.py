@@ -57,6 +57,43 @@ def list_environments(credentials):
     return r.text
 
 
+def list_environments_cli(credentials):
+    """ Return Watson Discovery Environments
+
+        Args:
+            cred (dictionary): Watson credentials
+
+        Returns:
+            str: JSON results
+
+    """
+#     {
+#       "environments" : [ {
+#         "environment_id" : "system",
+#         "name" : "Watson System Environment",
+#         "description" : "Shared system data sources",
+#         "read_only" : true
+#       }, {
+#         "environment_id" : "71cac327-84eb-4327-81da-24d49f14a445",
+#         "name" : "test api",
+#         "description" : "why not",
+#         "created" : "2017-12-26T19:42:05.004Z",
+#         "updated" : "2017-12-26T19:42:05.004Z",
+#         "read_only" : false
+#       } ]
+#     }
+
+    list_envids = []
+    envids = json.loads(list_environments(credentials))
+
+    for e in envids['environments']:
+        list_envids.append(e)
+    if len(list_envids): 
+        return list_envids
+    else:
+        return None
+    
+
 def list_configurations(credentials,envid):
     """ Return Watson Discovery Configurations
 
@@ -83,8 +120,46 @@ def list_collections(credentials,envid):
             str: JSON results
 
     """
+    # https://www.ibm.com/watson/developercloud/discovery/api/v1/?curl#create-collection
+    # curl \
+    # -u "{username}":"{password}" \
+    # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections?version=2017-11-07"
+    api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
+    api += '/' + envid + '/collections'
+    payload = {}
+    payload['version'] = credentials['version']
 
-    return "list_collections({0},{1})".format(credentials,envid)
+    r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
+    if args.verbose >= 1:
+        print('Request: ' + r.url)
+
+    # return "list_collections({0},{1})".format(credentials,envid)
+    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
+    # print(r.text)
+    if r.status_code == requests.codes.ok:
+        return r.text
+    else:
+        print "List Collections Failed: {0}".format(r.status_code)
+        return None
+    
+def get_collections_ids(credentials,envids):
+    """ Return Watson Discovery Collections
+
+        Args:
+            credentials (dictionary): Watson credentials
+            envids (list): Watson environment_id's
+
+        Returns:
+            list: collection_ids
+
+    """
+    collection_ids = []
+    for e in envids:
+        collections = list_collection(credentials=credentials,envid=e)
+        for c in collections['collections']:
+            collection_ids.append(['collection_id'])
+
+    return collection_ids
 
 
 def list_documents(credentials,envid,colid):
@@ -164,32 +239,6 @@ def list_document(credentials,envid,colid,docid):
     """
 
     return "list_document({0},{1},{2},{3})".format(credentials,envid,colid,docid)
-
-
-def list_environments(cred):
-    """ Return Watson Discovery Environments
-
-        Args:
-            cred (dictionary): Watson credentials
-
-        Returns:
-            str: JSON results
-
-    """
-
-    import json
-    import requests
-    api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
-    payload = {}
-    payload['version'] = cred['version']
-
-    r = requests.get(api, params=payload, auth=(cred['username'], cred['password']))
-    if args.verbose >= 1:
-        print('Request: ' + r.url)
-
-    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-    # print(r.text)
-    return r.text
 
 
 def list_environments_summary(cred):
@@ -345,10 +394,10 @@ if __name__ == "__main__":
     credentials = get_watson_credentials(args.auth)
     envids = get_environment_ids(cred=credentials)
 
-    create_allowed = set(['environment', 'collection'])
-    delete_allowed = set(['environment', 'configuration', 'collection', 'document'])
+    create_allowed = ['environment', 'collection']
+    delete_allowed = ['environment', 'configuration', 'collection', 'document']
     list_allowed = ['environments', 'configurations', 'collections', 'documents', 'environment', 'configuration', 'collection', 'document']
-    delete_allowed = set(['environment', 'configuration', 'collection', 'document'])
+    delete_allowed = ['environment', 'configuration', 'collection', 'document']
 
     if args.list:
         if not (args.list.lower() in list_allowed):
@@ -364,10 +413,15 @@ if __name__ == "__main__":
             sys.exit(1)
 
         if list_lower == 'environments':
-            result=list_environments(credentials=credentials)
-            print result
+            result=list_environments_cli(credentials=credentials)
+#         "environment_id" : "system",
+#         "name" : "Watson System Environment",
+#         "description" : "Shared system data sources",
+#         "read_only" : true
+            for i, val in enumerate(result):
+                print "{0}: id={1[environment_id]}; name={1[name]}; descr={1[description]};".format(i, val)
         elif list_lower == 'configurations':
-            result=list_configurations(credentials=credentials,envid=envid)
+            result=list_configurations(credentials=credentials,envids=envids)
             print result
         elif list_lower == 'collections':
             result=list_collections(credentials=credentials,envid=envid)
