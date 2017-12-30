@@ -517,7 +517,15 @@ if __name__ == "__main__":
                 print result
             else:
                 for i, val in enumerate(result):
-                    print "{0}: id={1[collection_id]}{2}name={1[name]}{2}cfgid={1[configuration_id]}{2}descr={1[description]}{2}lang={1[language]}{2}status={1[status]}{2}created={1[created]}{2}updated={1[updated]}".format(i, val, args.separator)
+                    print "{0}: id={1[collection_id]}{2}name={1[name]}{2}descr={1[description]}{2}lang={1[language]}{2}status={1[status]}".format(i, val, args.separator),
+                    if 'configuration_id' in val:
+                        print "{1}cfgid={0[configuration_id]}".format(val, args.separator),
+                    if 'created' in val:
+                        print "{1}created={0[created]}".format(val, args.separator),                        
+                    if 'updated' in val:
+                        print "{1}updated={0[updated]}".format(val, args.separator),
+                        
+                    print                        
 
         elif list_lower == 'documents':
             result = list_documents(credentials=credentials, envid=envid, colid=args.colid)
