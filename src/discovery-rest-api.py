@@ -35,12 +35,12 @@ def get_watson_credentials(filename):
     return result
 
 
-def list_environments(credentials, cli_output=False):
+def list_environments(credentials, raw=True):
     """ Return Watson Discovery Environments
 
         Args:
             credentials (dictionary): Watson credentials
-            cli_output (boolean): command line text output
+            raw (boolean): JSON output
 
         Returns:
             str: JSON results
@@ -76,7 +76,7 @@ def list_environments(credentials, cli_output=False):
         print "List Collections Failed: {0}".format(r.status_code)
         return None
     else:
-        if not cli_output:
+        if raw:
             return r.text
         else:
             envs = json.loads(r.text)
@@ -90,21 +90,20 @@ def list_environments(credentials, cli_output=False):
                 return None
 
 
-def list_configurations(credentials, envid, cli_output=False):
+def list_configurations(credentials, envid, raw=True):
     """ Return Watson Discovery Configurations
 
         Args:
             credentials (dictionary): Watson credentials
             envid (str): Watson environment_id
-            cli_output (boolean): command line text output
+            raw (boolean): JSON output
 
         Returns:
             str: JSON results
 
     """
-    print envid
-    if envid is None:
-        print "Invalid envid, 'None'"
+    if envid == -1:
+        print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
     # curl -u "{username}":"{password}"
@@ -134,34 +133,39 @@ def list_configurations(credentials, envid, cli_output=False):
 #     }
 
     if r.status_code != requests.codes.ok:
-        print "List Collections Failed: {0}".format(r.status_code)
+        print "List Configurations Failed: {0}".format(r.status_code)
         return None
     else:
-        if not cli_output:
+        if raw:
             return r.text
         else:
-            cols = json.loads(r.text)
-            collection_list = []
-            for e in cols['configurations']:
-                collection_list.append(e)
+            cfgs = json.loads(r.text)
+            configuration_list = []
+            for e in cfgs['configurations']:
+                configuration_list.append(e)
 
-            if len(collection_list):
-                return collection_list
+            if len(configuration_list):
+                return configuration_list
             else:
                 return None
 
 
-def list_collections(credentials, envid):
+def list_collections(credentials, envid, raw=True):
     """ Return Watson Discovery Collections
 
         Args:
             credentials (dictionary): Watson credentials
             envid (str): Watson environment_id
+            raw (boolean): JSON output
 
         Returns:
             str: JSON results
 
     """
+    if envid == -1:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
+
     # https://www.ibm.com/watson/developercloud/discovery/api/v1/?curl#create-collection
     # curl \
     # -u "{username}":"{password}" \
@@ -178,11 +182,35 @@ def list_collections(credentials, envid):
     # return "list_collections({0},{1})".format(credentials,envid)
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
     # print(r.text)
-    if r.status_code == requests.codes.ok:
-        return r.text
-    else:
+#     {
+#       "collections" : [ {
+#         "collection_id" : "5bbeb90b-08b6-4eb4-b5cf-82b7ed0aada1",
+#         "name" : "TestOne",
+#         "configuration_id" : "108f7bf9-9c16-43ec-853c-7c877b12b36b",
+#         "language" : "en",
+#         "status" : "active",
+#         "description" : null,
+#         "created" : "2017-12-26T19:44:07.225Z",
+#         "updated" : "2017-12-26T19:44:07.225Z"
+#       } ]
+#     }
+
+    if r.status_code != requests.codes.ok:
         print "List Collections Failed: {0}".format(r.status_code)
         return None
+    else:
+        if raw:
+            return r.text
+        else:
+            cols = json.loads(r.text)
+            collection_list = []
+            for e in cols['collections']:
+                collection_list.append(e)
+
+            if len(collection_list):
+                return collection_list
+            else:
+                return None
 
 
 def get_collections_ids(credentials, envids):
@@ -430,6 +458,8 @@ if __name__ == "__main__":
     parser.add_argument('--colid', type=int, default=-1, help='collection index')
     parser.add_argument('--docid', type=int, default=-1, help='document index')
     parser.add_argument('-a', '--auth', default='.watson.cfg', help='Watson credentials')
+    parser.add_argument('--raw', help='JSON output', default=False, action='store_true')
+    parser.add_argument('-s', '--separator', help='delimited', default='\n  ')
     parser.add_argument('-v', '--verbose', action='count', default=0)
     args = parser.parse_args()
     if args.verbose >= 1:
@@ -450,32 +480,45 @@ if __name__ == "__main__":
 
         list_lower = args.list.lower()
 
-        if args.envid < len(envids) and args.envid in envids:
+        if list_lower == 'environments':
+            pass
+        elif args.envid < len(envids) and args.envid >= 0:
             envid = envids[args.envid]
         else:
             print "Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0])
             sys.exit(1)
 
         if list_lower == 'environments':
-            result = list_environments(credentials=credentials, cli_output=True)
+            result = list_environments(credentials=credentials, raw=args.debug)
             if result is None:
                 print "No Environments?"
                 sys.exit(1)
+            elif args.raw:
+                print result
             else:
                 for i, val in enumerate(result):
-                    print "{0}: id={1[environment_id]}; name={1[name]}; descr={1[description]};".format(i, val)
+                    print "{0}: id={1[environment_id]}{2}name={1[name]}{2}descr={1[description]}{2}".format(i, val, args.separator)
 
         elif list_lower == 'configurations':
-            result = list_configurations(credentials=credentials, envid=envid, cli_output=True)
+            result = list_configurations(credentials=credentials, envid=envid, raw=args.raw)
             if result is None:
                 print "No configurations for, '{0}'".format(envid)
+            elif args.raw:
+                print result
             else:
                 for i, val in enumerate(result):
-                    print "{0}: id={1[configuration_id]}; name={1[name]}; descr={1[description]};".format(i, val)
+                    print "{0}: id={1[configuration_id]}{2}name={1[name]}{2}descr={1[description]}{2}created={1[created]}{2}updated={1[updated]}".format(i, val, args.separator)
 
         elif list_lower == 'collections':
-            result = list_collections(credentials=credentials, envid=envid)
-            print result
+            result = list_collections(credentials=credentials, envid=envid, raw=args.raw)
+            if result is None:
+                print "No collections for, '{0}'".format(envid)
+            elif args.raw:
+                print result
+            else:
+                for i, val in enumerate(result):
+                    print "{0}: id={1[collection_id]}{2}name={1[name]}{2}cfgid={1[configuration_id]}{2}descr={1[description]}{2}lang={1[language]}{2}status={1[status]}{2}created={1[created]}{2}updated={1[updated]}".format(i, val, args.separator)
+
         elif list_lower == 'documents':
             result = list_documents(credentials=credentials, envid=envid, colid=args.colid)
             print result
