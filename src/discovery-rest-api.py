@@ -233,7 +233,7 @@ def get_collections_ids(credentials, envids):
     return collection_ids
 
 
-def list_documents(credentials, envid, colid):
+def list_documents(credentials, envid, colid=None, raw=True):
     """ Return Watson Discovery Documents
 
         Args:
@@ -245,7 +245,38 @@ def list_documents(credentials, envid, colid):
             str: JSON results
 
     """
+    if envid == -1:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
 
+    if colid == -1:
+        print "Missing collection_id; hint {0} -L configurations --envid <envid>".format(sys.argv[0])
+        sys.exit(1)
+        
+    # GC: 2017.12.30: not sure this is supported...
+    # GET /v1/environments/{environment_id}/collections/{collection_id}/documents}
+    # curl -u "{username}":"{password}"
+    # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
+
+    api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
+    api += '/' + envid + '/collections/' + colid + '/documents' 
+    payload = {}
+    payload['version'] = credentials['version']
+
+    r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
+    if args.verbose >= 1:
+        print('Request: ' + r.url)
+
+    if r.status_code != requests.codes.ok:
+        print "List Documents Failed: {0}".format(r.status_code)
+        return None
+    else:
+        if raw:
+            return r.text
+ 
+    # return "list_collections({0},{1})".format(credentials,envid)
+    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
+    # print(r.text)
     return "list_documents({0},{1},{2})".format(credentials, envid, colid)
 
 
@@ -528,7 +559,8 @@ if __name__ == "__main__":
                     print                        
 
         elif list_lower == 'documents':
-            result = list_documents(credentials=credentials, envid=envid, colid=args.colid)
+            colids = get_collections_ids(credentials, envids)
+            result = list_documents(credentials=credentials, envid=envid, colid=args.colid, raw=args.raw)
             print result
         elif list_lower == 'environment':
             result = list_environment(credentials=credentials, envid=envid)
