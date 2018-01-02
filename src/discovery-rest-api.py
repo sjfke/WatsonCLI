@@ -278,7 +278,7 @@ def list_documents(credentials, envid, colid=None, raw=True):
         sys.exit(1)
 
     if colid == -1:
-        print "Missing collection_id; hint {0} -L configurations --envid <envid>".format(sys.argv[0])
+        print "Missing collection_id; hint {0} -L configurations --envid {1}".format(sys.argv[0], envid)
         sys.exit(1)
 
     # GET /v1/environments/{environment_id}/collections/{collection_id}/documents
@@ -307,6 +307,31 @@ def list_documents(credentials, envid, colid=None, raw=True):
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
     # print(r.text)
     return "list_documents({0},{1},{2})".format(credentials, envid, colid)
+
+
+def get_document_ids(credentials, envid, colid):
+    """ Return Watson Discovery Documents
+        Args:
+            credentials (dictionary): Watson credentials
+            envid (str): Watson environment_id
+            colid (str): Watson collection_id
+
+        Returns:
+            list: document_ids
+
+    """
+    if envid == -1:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
+
+    document_ids = []
+    documents = list_documents(credentials=credentials, envid=envid, colid=colid)
+    if documents is not None:
+        document = json.loads(documents)
+        for c in document['documents']:
+            document_ids.append(c['document_id'])
+
+    return document_ids
 
 
 def list_environment(credentials, envid, raw=True):
@@ -389,7 +414,7 @@ def list_configuration(credentials, envid, cfgid, raw=True):
             raw (boolean): JSON output
 
         Returns:
-            str: JSON results
+            str: JSON or YAML results
 
     """
 
@@ -398,7 +423,7 @@ def list_configuration(credentials, envid, cfgid, raw=True):
         sys.exit(1)
 
     if cfgid == -1:
-        print "Invalid cfgid, '{0}', hint try: {1} -L configurations --envid <envid>".format(cfgid, sys.argv[0])
+        print "Invalid cfgid, '{0}', hint try: {1} -L configurations --envid {2}".format(cfgid, sys.argv[0], envid)
         sys.exit(1)
 
 #     GET /v1/environments/{environment_id}/configurations/{configuration_id}
@@ -431,23 +456,58 @@ def list_configuration(credentials, envid, cfgid, raw=True):
     return "Unknown Error: list_configuration({0})".format(envid)
 
 
-def list_collection(credentials, envid, colid):
+def list_collection(credentials, envid, colid, raw=True):
     """ Return Watson Discovery Collection Details
 
         Args:
             credentials (dictionary): Watson credentials
             envid (str): Watson environment_id
             colid (str): Watson collection_id
+            raw (boolean): JSON or YAML output
 
         Returns:
-            str: JSON results
+            str: JSON or YAML results
 
     """
+    if envid == -1:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
 
-    return "list_collection({0},{1},{2})".format(credentials, envid, colid)
+    if colid == -1:
+        print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], envid)
+        sys.exit(1)
+
+#     GET /v1/environments/{environment_id}/collections/{collection_id}
+#     curl -u "{username}":"{password}"
+#      "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}?version=2017-11-07"
+
+    api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
+    api += '/' + envid + '/collections/' + colid
+    payload = {}
+    payload['version'] = credentials['version']
+
+    r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
+    if args.verbose >= 1:
+        print('Request: ' + r.url)
+
+#     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
+#     print(r.text)
+    if r.status_code != requests.codes.ok:
+        if args.verbose >= 1:
+            print "List collection Failed: {0}".format(r.status_code)
+
+        return None
+    else:
+        if raw:
+            return r.text
+        else:
+            collection = json.loads(r.text)
+            return yaml.safe_dump(collection, encoding='utf-8', allow_unicode=True)
+
+    return "Unknown Error: list_collecation({0})".format(envid)
 
 
-def list_document(credentials, envid, colid, docid):
+def list_document(credentials, envid, colid, docid, raw=True):
     """ Return Watson Discovery Document Details
 
         Args:
@@ -455,13 +515,48 @@ def list_document(credentials, envid, colid, docid):
             envid (str): Watson environment_id
             colid (str): Watson collection_id
             docid (str): Watson document_id
+            raw (boolean): JSON or YAML output
 
         Returns:
             str: JSON results
 
     """
+    if envid == -1:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
 
-    return "list_document({0},{1},{2},{3})".format(credentials, envid, colid, docid)
+    if colid == -1:
+        print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], '<envid>')
+        sys.exit(1)
+
+#     GET /v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}
+#     curl -u "{username}":"{password}"
+#      "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}?version=2017-11-07"
+
+    api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
+    api += '/' + envid + '/collections/' + colid + '/documents/' + docid
+    payload = {}
+    payload['version'] = credentials['version']
+
+    r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
+    if args.verbose >= 1:
+        print('Request: ' + r.url)
+
+#     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
+#     print(r.text)
+    if r.status_code != requests.codes.ok:
+        if args.verbose >= 1:
+            print "List document Failed: {0}".format(r.status_code)
+
+        return None
+    else:
+        if raw:
+            return r.text
+        else:
+            document = json.loads(r.text)
+            return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True)
+
+    return "Unknown Error: list document({0})".format(envid)
 
 
 def list_environments_summary(cred):
@@ -698,20 +793,38 @@ if __name__ == "__main__":
         elif list_lower == 'configuration':
             cfgids = get_configuration_ids(credentials, envid)
             try:
-                cfgid = cfgids[args.cfgid]           
+                cfgid = cfgids[args.cfgid]
                 result = list_configuration(credentials=credentials, envid=envid, cfgid=cfgid, raw=args.raw)
                 title = "Configuration: {0}".format(cfgid)
                 print title + os.linesep + ("=" * len(title))
                 print result
             except IndexError:
-                print "Invalid cfgid; hint try {0} -L configurations --envid <envid>".format(sys.argv[0]) 
-            
+                print "Invalid {1}; hint try {0} -L configurations --envid {2}".format(sys.argv[0], 'cfgid', args.envid)
+
         elif list_lower == 'collection':
-            result = list_collection(credentials=credentials, envid=envid, colid=args.colid)
-            print result
+            colids = get_collections_ids(credentials, envid)
+            try:
+                colid = colids[args.colid]
+                result = list_collection(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
+                title = "Collection: {0}".format(colid)
+                print title + os.linesep + ("=" * len(title))
+                print result
+            except IndexError:
+                print "Invalid {1}; hint try {0} -L collections --envid {2}".format(sys.argv[0], 'colid', args.envid)
+
         elif list_lower == 'document':
-            result = list_document(credentials=credentials, envid=envid, colid=args.colid, docid=args.docid)
-            print result
+            colids = get_collections_ids(credentials, envid)
+            try:
+                colid = colids[args.colid]
+                docids = get_document_ids(credentials=credentials, envid=envid, colid=colid)
+                docid = docids[args.docid]
+                result = list_document(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
+                title = "Document: {0}".format(docid)
+                print title + os.linesep + ("=" * len(title))
+                print result
+            except IndexError:
+                print "Invalid {1}; hint try {0} -L documents --envid {2}".format(sys.argv[0], 'colid', args.envid)
+
         else:
             print "Error: invalid List option, '{0}'".format(args.list)
             sys.exit(1)
