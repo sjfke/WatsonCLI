@@ -559,28 +559,7 @@ def list_document(credentials, envid, colid, docid, raw=True):
     return "Unknown Error: list document({0})".format(envid)
 
 
-def list_environments_summary(cred):
-    """ Return a List of Watson Discovery Environments Id
-
-        Args:
-            cred (dictionary): Watson credentials
-
-        Returns:
-            str: <index>: <id>, <name>, <description> 
-
-    """
-
-    import json
-    envs = json.loads(list_environments(cred))
-    results = []
-    for env in envs['environments']:
-        result = {'id': env['environment_id'], 'name': env['name'], 'descr': env['description']}
-        results.append(result)
-
-    return results
-
-
-def get_environment_ids(cred):
+def get_environment_ids(credentials):
     """ Return a List of Watson Discovery Environments Id
 
         Args:
@@ -592,7 +571,7 @@ def get_environment_ids(cred):
     """
 
     import json
-    envs = json.loads(list_environments(cred))
+    envs = json.loads(list_environments(credentials))
     results = []
     for env in envs['environments']:
         results.append(env['environment_id'])
@@ -686,13 +665,71 @@ def delete_discovery_environment(cred, envid):
 
     return r.text
 
-# TODO: add document upload
+def upload_document(credentials, envid, colid, file_name, raw=True):
+    '''
+    Upload a document into a collection in the environment
+    :param credentials: Watson Credentials (username, password, version)
+    :param envid: mandatory environment_id string
+    :param colid: mandatory collection_id string
+    :param file_name: file to upload
+    :param raw: True (JSON), False (YAML)
+    '''
+   
+    if envid == -1:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
+
+    if colid == -1:
+        print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], envid)
+        sys.exit(1)
+
+    if not ( os.path.isfile(file_name) and os.access(file_name, os.R_OK) ):
+        print "Filename not readable, '{0}'".format(file_name)
+        sys.exit(1)
+
+#     POST /v1/environments/{environment_id}/collections/{collection_id}/documents
+#     curl -X POST -u "{username}":"{password}" \
+#      -F file=@sample1.html
+#      "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
+    api = "https://gateway.watsonplatform.net/discovery/api/v1"
+    api += '/environments/' + envid + '/collections/' + colid + '/documents'
+    api += '?version=' + credentials['version']
+    
+    # Supported formats (50 MB max).
+    # application/json, 
+    # application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, 
+    # application/pdf,
+    # text/html, and application/xhtml+xml
+    # TODO: 2018.01.02 look at 'pip install python-magic' (import magic for detecting file types)
+    mime_type = 'text/html'
+    
+    files = {'file': (os.path.basename(file_name), open(file_name, 'rb'), mime_type, {'Expires': 0})}
+    r = requests.post(api, files=files, auth=(credentials['username'], credentials['password']))
+
+    if args.verbose >= 1:
+        print('Request: ' + r.url)
+
+    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
+    # print(r.text)
+    
+    # 200 OK - Successful request
+    # 202 Accepted - index progressing.
+    # 400 Bad Request - Invalid request if the request is incorrectly formatted. 
+    # 404 Not Found - The request specified a resource that was not found
+    if r.status_code == requests.codes.ok or r.status_code == requests.codes.accepted:
+        return r.text
+    else:
+        print "Upload File Failed: {0}".format(r.status_code)
+        return None
+
+
 # https://www.ibm.com/watson/developercloud/discovery/api/v1/
 # https://console.bluemix.net/docs/services/discovery/getting-started.html#getting-started-with-the-api
 
 if __name__ == "__main__":
     watson_cfg_file = os.path.join(os.getcwd(), '.watson.cfg')
     parser = argparse.ArgumentParser(description='Discovery REST interface')
+    parser.add_argument('-A', '--add', help='upload document')
     parser.add_argument('-C', '--create', help='(environment|collection)')
     parser.add_argument('-D', '--delete', help='(environment|configuration|collection|document)')
     parser.add_argument('-L', '--list', help='(environment[s]|configuration[s]|collection[s]|document[s])')
@@ -712,7 +749,7 @@ if __name__ == "__main__":
         print "watson-cfg: '{0}'".format(args.auth)
 
     credentials = get_watson_credentials(args.auth)
-    envids = get_environment_ids(cred=credentials)
+    envids = get_environment_ids(credentials=credentials)
 
     create_allowed = ['environment', 'collection']
     delete_allowed = ['environment', 'configuration', 'collection', 'document']
@@ -742,8 +779,15 @@ if __name__ == "__main__":
             elif args.raw:
                 print result
             else:
+                title = "Environments:"
+                print title + os.linesep + ("=" * len(title))
                 for i, val in enumerate(result):
-                    print "{0}: id={1[environment_id]}{2}name={1[name]}{2}descr={1[description]}{2}".format(i, val, args.separator)
+                    print "{0:d}:{2}configuration_id: {1[environment_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
+                    if 'created' in val:
+                        print "{1}created: {0[created]}".format(val, args.separator),
+                    if 'updated' in val:
+                        print "{1}updated: {0[updated]}".format(val, args.separator),
+                    print
 
         elif list_lower == 'configurations':
             result = list_configurations(credentials=credentials, envid=envid, raw=args.raw)
@@ -752,8 +796,15 @@ if __name__ == "__main__":
             elif args.raw:
                 print result
             else:
+                title = "Configurations (EnvID: {0}):".format(envid)
+                print title + os.linesep + ("=" * len(title))                
                 for i, val in enumerate(result):
-                    print "{0}: id={1[configuration_id]}{2}name={1[name]}{2}descr={1[description]}{2}created={1[created]}{2}updated={1[updated]}".format(i, val, args.separator)
+                    print "{0:d}:{2}configuration_id: {1[configuration_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
+                    if 'created' in val:
+                        print "{1}created: {0[created]}".format(val, args.separator),
+                    if 'updated' in val:
+                        print "{1}updated: {0[updated]}".format(val, args.separator),
+                    print
 
         elif list_lower == 'collections':
             result = list_collections(credentials=credentials, envid=envid, raw=args.raw)
@@ -762,14 +813,17 @@ if __name__ == "__main__":
             elif args.raw:
                 print result
             else:
+                title = "Collections (EnvID: {0}):".format(envid)
+                print title + os.linesep + ("=" * len(title))
                 for i, val in enumerate(result):
-                    print "{0}: id={1[collection_id]}{2}name={1[name]}{2}descr={1[description]}{2}lang={1[language]}{2}status={1[status]}".format(i, val, args.separator),
+                    print "{0:d}:{2}collection_id: {1[collection_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
+                    print "{1}lang: {0[language]}{1}status: {0[status]}".format(val, args.separator),
                     if 'configuration_id' in val:
-                        print "{1}cfgid={0[configuration_id]}".format(val, args.separator),
+                        print "{1}configuration_id: {0[configuration_id]}".format(val, args.separator),
                     if 'created' in val:
-                        print "{1}created={0[created]}".format(val, args.separator),
+                        print "{1}created: {0[created]}".format(val, args.separator),
                     if 'updated' in val:
-                        print "{1}updated={0[updated]}".format(val, args.separator),
+                        print "{1}updated: {0[updated]}".format(val, args.separator),
 
                     print
 
@@ -778,12 +832,18 @@ if __name__ == "__main__":
             colids = get_collections_ids(credentials, envid)
             colid = colids[args.colid]
             result = list_documents(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
+            print "Warning: this appears not too work?"
             if result is None:
-                print "Environment: '{0}'".format(envid)
-                print "Collection: '{0}'".format(colid)
-                print "  No documents found"
+                title = "Documents (EnvID: {0}):".format(envid)
+                print title + os.linesep + ("=" * len(title)),
+                print "{1}Collection: '{0}'".format(colid, args.separator),
+                print "{0}No documents found".format(args.separator),
+                print
             elif args.raw:
                 print result
+            else:
+                # need to print documents
+                pass
 
         elif list_lower == 'environment':
             result = list_environment(credentials=credentials, envid=envid, raw=args.raw)
@@ -829,12 +889,18 @@ if __name__ == "__main__":
             print "Error: invalid List option, '{0}'".format(args.list)
             sys.exit(1)
 
-        sys.exit(0)
-
-        result = list_environments_summary(cred=credentials)
-        for i, val in enumerate(result):
-            print "{0}: id={1[id]}; name={1[name]}; descr={1[descr]};".format(i, val)
-
+    elif args.add:
+            try:
+                envid = envids[args.envid]
+                colids = get_collections_ids(credentials, envid)
+                colid = colids[args.colid]
+                result = upload_document(credentials=credentials, envid=envid, colid=colid, file_name=args.add, raw=args.raw)
+                title = "Add Document: '{0}' (ColID {1})".format(args.add, colid)
+                print title + os.linesep + ("=" * len(title))
+                print result
+            except IndexError:
+                print "Invalid {1}; hint try {0} -L collections --envid {2}".format(sys.argv[0], 'colid', args.envid)
+        
     elif args.environment >= 0:
         if args.environment < len(envids):
             envid = envids[args.environment]
