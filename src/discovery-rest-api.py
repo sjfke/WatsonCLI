@@ -151,6 +151,29 @@ def list_configurations(credentials, envid, raw=True):
                 return None
 
 
+def get_configuration_ids(credentials, envid):
+    """ Return Watson Discovery Configurations
+
+        Args:
+            credentials (dictionary): Watson credentials
+            envids (list): Watson environment_id's
+
+        Returns:
+            list: configuration_ids
+
+    """
+    if envid == -1:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
+
+    configuration_ids = []
+    configuration = json.loads(list_configurations(credentials=credentials, envid=envid))
+    for c in configuration['configurations']:
+        configuration_ids.append(c['configuration_id'])
+
+    return configuration_ids
+
+
 def list_collections(credentials, envid, raw=True):
     """ Return Watson Discovery Collections
 
@@ -344,7 +367,7 @@ def list_environment(credentials, envid, raw=True):
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
             print "List environment Failed: {0}".format(r.status_code)
-            
+
         return None
     else:
         if raw:
@@ -356,20 +379,56 @@ def list_environment(credentials, envid, raw=True):
     return "Unknown Error: list_environment({0})".format(envid)
 
 
-def list_configuration(credentials, envid, cfgid):
+def list_configuration(credentials, envid, cfgid, raw=True):
     """ Return Watson Discovery Configuration Details
 
         Args:
             credentials (dictionary): Watson credentials
             envid (str): Watson environment_id
             cfgid (str): Watson configuration_id
+            raw (boolean): JSON output
 
         Returns:
             str: JSON results
 
     """
 
-    return "list_configuration({0},{1},{2})".format(credentials, envid, cfgid)
+    if envid == -1:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
+
+    if cfgid == -1:
+        print "Invalid cfgid, '{0}', hint try: {1} -L configurations --envid <envid>".format(cfgid, sys.argv[0])
+        sys.exit(1)
+
+#     GET /v1/environments/{environment_id}/configurations/{configuration_id}
+#     curl -u "{username}":"{password}"
+#      "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/configurations/{configuration_id}?version=2017-11-07"
+
+    api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
+    api += '/' + envid + '/configurations/' + cfgid
+    payload = {}
+    payload['version'] = credentials['version']
+
+    r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
+    if args.verbose >= 1:
+        print('Request: ' + r.url)
+
+#     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
+#     print(r.text)
+    if r.status_code != requests.codes.ok:
+        if args.verbose >= 1:
+            print "List configuration Failed: {0}".format(r.status_code)
+
+        return None
+    else:
+        if raw:
+            return r.text
+        else:
+            configuration = json.loads(r.text)
+            return yaml.safe_dump(configuration, encoding='utf-8', allow_unicode=True)
+
+    return "Unknown Error: list_configuration({0})".format(envid)
 
 
 def list_collection(credentials, envid, colid):
@@ -637,8 +696,16 @@ if __name__ == "__main__":
             print title + os.linesep + ("=" * len(title))
             print result
         elif list_lower == 'configuration':
-            result = list_configuration(credentials=credentials, envid=envid, cfgid=args.cfgid)
-            print result
+            cfgids = get_configuration_ids(credentials, envid)
+            try:
+                cfgid = cfgids[args.cfgid]           
+                result = list_configuration(credentials=credentials, envid=envid, cfgid=cfgid, raw=args.raw)
+                title = "Configuration: {0}".format(cfgid)
+                print title + os.linesep + ("=" * len(title))
+                print result
+            except IndexError:
+                print "Invalid cfgid; hint try {0} -L configurations --envid <envid>".format(sys.argv[0]) 
+            
         elif list_lower == 'collection':
             result = list_collection(credentials=credentials, envid=envid, colid=args.colid)
             print result
