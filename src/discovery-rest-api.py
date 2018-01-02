@@ -7,6 +7,7 @@ import sys
 import json
 import yaml
 import requests
+from _bsddb import api
 
 
 def get_watson_credentials(filename):
@@ -665,6 +666,7 @@ def delete_discovery_environment(cred, envid):
 
     return r.text
 
+
 def upload_document(credentials, envid, colid, file_name, raw=True):
     '''
     Upload a document into a collection in the environment
@@ -674,7 +676,7 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
     :param file_name: file to upload
     :param raw: True (JSON), False (YAML)
     '''
-   
+
     if envid == -1:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
@@ -683,7 +685,7 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
         print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], envid)
         sys.exit(1)
 
-    if not ( os.path.isfile(file_name) and os.access(file_name, os.R_OK) ):
+    if not (os.path.isfile(file_name) and os.access(file_name, os.R_OK)):
         print "Filename not readable, '{0}'".format(file_name)
         sys.exit(1)
 
@@ -691,18 +693,20 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
 #     curl -X POST -u "{username}":"{password}" \
 #      -F file=@sample1.html
 #      "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
+    print "upload: envid={0}; colid={1}; fname={2}".format(envid, colid, file_name)
     api = "https://gateway.watsonplatform.net/discovery/api/v1"
     api += '/environments/' + envid + '/collections/' + colid + '/documents'
     api += '?version=' + credentials['version']
-    
+
+    return api
     # Supported formats (50 MB max).
-    # application/json, 
-    # application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, 
+    # application/json,
+    # application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document,
     # application/pdf,
     # text/html, and application/xhtml+xml
     # TODO: 2018.01.02 look at 'pip install python-magic' (import magic for detecting file types)
     mime_type = 'text/html'
-    
+
     files = {'file': (os.path.basename(file_name), open(file_name, 'rb'), mime_type, {'Expires': 0})}
     r = requests.post(api, files=files, auth=(credentials['username'], credentials['password']))
 
@@ -711,10 +715,10 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
 
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
     # print(r.text)
-    
+
     # 200 OK - Successful request
     # 202 Accepted - index progressing.
-    # 400 Bad Request - Invalid request if the request is incorrectly formatted. 
+    # 400 Bad Request - Invalid request if the request is incorrectly formatted.
     # 404 Not Found - The request specified a resource that was not found
     if r.status_code == requests.codes.ok or r.status_code == requests.codes.accepted:
         return r.text
@@ -736,10 +740,10 @@ if __name__ == "__main__":
     parser.add_argument('-U', '--update', help='(environment|configuration|collection|document)')
     parser.add_argument('-d', '--description', default=None, help='description for create command')
     parser.add_argument('-n', '--name', default=None, help='name for create command')
-    parser.add_argument('--envid', type=int, default=-1, help='environment index')
-    parser.add_argument('--cfgid', type=int, default=-1, help='configuration index')
-    parser.add_argument('--colid', type=int, default=-1, help='collection index')
-    parser.add_argument('--docid', type=int, default=-1, help='document index')
+    parser.add_argument('--envid', type=int, default=None, help='environment index')
+    parser.add_argument('--cfgid', type=int, default=None, help='configuration index')
+    parser.add_argument('--colid', type=int, default=None, help='collection index')
+    parser.add_argument('--docid', type=int, default=None, help='document index')
     parser.add_argument('-a', '--auth', default='.watson.cfg', help='Watson credentials file')
     parser.add_argument('--raw', help='JSON output', default=False, action='store_true')
     parser.add_argument('-s', '--separator', help='field delimiter', default='\n  ')
@@ -797,7 +801,7 @@ if __name__ == "__main__":
                 print result
             else:
                 title = "Configurations (EnvID: {0}):".format(envid)
-                print title + os.linesep + ("=" * len(title))                
+                print title + os.linesep + ("=" * len(title))
                 for i, val in enumerate(result):
                     print "{0:d}:{2}configuration_id: {1[configuration_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
                     if 'created' in val:
@@ -890,17 +894,22 @@ if __name__ == "__main__":
             sys.exit(1)
 
     elif args.add:
-            try:
-                envid = envids[args.envid]
-                colids = get_collections_ids(credentials, envid)
-                colid = colids[args.colid]
-                result = upload_document(credentials=credentials, envid=envid, colid=colid, file_name=args.add, raw=args.raw)
-                title = "Add Document: '{0}' (ColID {1})".format(args.add, colid)
-                print title + os.linesep + ("=" * len(title))
-                print result
-            except IndexError:
-                print "Invalid {1}; hint try {0} -L collections --envid {2}".format(sys.argv[0], 'colid', args.envid)
-        
+        try:
+            envid = envids[args.envid]
+            colids = get_collections_ids(credentials, envid)
+            colid = colids[args.colid]
+            result = upload_document(credentials=credentials, envid=envid, colid=colid, file_name=args.add, raw=args.raw)
+            title = "Add Document: '{0}' (ColID {1})".format(args.add, colid)
+            print title + os.linesep + ("=" * len(title))
+            print result
+        except IndexError:
+            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+            print " envid={0}; colid={1}".format(args.envid, args.colid)
+        except TypeError as e:
+            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+            print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
+            sys.exit(1)
+
     elif args.environment >= 0:
         if args.environment < len(envids):
             envid = envids[args.environment]
