@@ -559,27 +559,6 @@ def list_document(credentials, envid, colid, docid, raw=True):
     return "Unknown Error: list document({0})".format(envid)
 
 
-def list_environments_summary(cred):
-    """ Return a List of Watson Discovery Environments Id
-
-        Args:
-            cred (dictionary): Watson credentials
-
-        Returns:
-            str: <index>: <id>, <name>, <description> 
-
-    """
-
-    import json
-    envs = json.loads(list_environments(cred))
-    results = []
-    for env in envs['environments']:
-        result = {'id': env['environment_id'], 'name': env['name'], 'descr': env['description']}
-        results.append(result)
-
-    return results
-
-
 def get_environment_ids(credentials):
     """ Return a List of Watson Discovery Environments Id
 
@@ -850,12 +829,6 @@ if __name__ == "__main__":
         else:
             print "Error: invalid List option, '{0}'".format(args.list)
             sys.exit(1)
-
-        sys.exit(0)
-
-        result = list_environments_summary(cred=credentials)
-        for i, val in enumerate(result):
-            print "{0}: id={1[id]}; name={1[name]}; descr={1[descr]};".format(i, val)
 
     elif args.environment >= 0:
         if args.environment < len(envids):
