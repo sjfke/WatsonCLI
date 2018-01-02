@@ -213,7 +213,7 @@ def list_collections(credentials, envid, raw=True):
                 return None
 
 
-def get_collections_ids(credentials, envids):
+def get_collections_ids(credentials, envid):
     """ Return Watson Discovery Collections
 
         Args:
@@ -224,11 +224,14 @@ def get_collections_ids(credentials, envids):
             list: collection_ids
 
     """
+    if envid == -1:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
+
     collection_ids = []
-    for e in envids:
-        collections = list_collection(credentials=credentials, envid=e)
-        for c in collections['collections']:
-            collection_ids.append(['collection_id'])
+    collections = json.loads(list_collections(credentials=credentials, envid=envid))
+    for c in collections['collections']:
+        collection_ids.append(c['collection_id'])
 
     return collection_ids
 
@@ -252,14 +255,13 @@ def list_documents(credentials, envid, colid=None, raw=True):
     if colid == -1:
         print "Missing collection_id; hint {0} -L configurations --envid <envid>".format(sys.argv[0])
         sys.exit(1)
-        
-    # GC: 2017.12.30: not sure this is supported...
-    # GET /v1/environments/{environment_id}/collections/{collection_id}/documents}
+
+    # GET /v1/environments/{environment_id}/collections/{collection_id}/documents
     # curl -u "{username}":"{password}"
     # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
 
     api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
-    api += '/' + envid + '/collections/' + colid + '/documents' 
+    api += '/' + envid + '/collections/' + colid + '/documents'
     payload = {}
     payload['version'] = credentials['version']
 
@@ -268,12 +270,14 @@ def list_documents(credentials, envid, colid=None, raw=True):
         print('Request: ' + r.url)
 
     if r.status_code != requests.codes.ok:
-        print "List Documents Failed: {0}".format(r.status_code)
+        if args.verbose >= 1:
+            print "List Documents Failed: {0}".format(r.status_code)
+
         return None
     else:
         if raw:
             return r.text
- 
+
     # return "list_collections({0},{1})".format(credentials,envid)
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
     # print(r.text)
@@ -552,16 +556,22 @@ if __name__ == "__main__":
                     if 'configuration_id' in val:
                         print "{1}cfgid={0[configuration_id]}".format(val, args.separator),
                     if 'created' in val:
-                        print "{1}created={0[created]}".format(val, args.separator),                        
+                        print "{1}created={0[created]}".format(val, args.separator),
                     if 'updated' in val:
                         print "{1}updated={0[updated]}".format(val, args.separator),
-                        
-                    print                        
+
+                    print
 
         elif list_lower == 'documents':
-            colids = get_collections_ids(credentials, envids)
-            result = list_documents(credentials=credentials, envid=envid, colid=args.colid, raw=args.raw)
-            print result
+            envid = envids[args.envid]
+            colids = get_collections_ids(credentials, envid)
+            colid = colids[args.colid]
+            result = list_documents(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
+            if result is None:
+                print "No documents for collections, '{0}'".format(colid)
+            elif args.raw:
+                print result
+
         elif list_lower == 'environment':
             result = list_environment(credentials=credentials, envid=envid)
             print result
