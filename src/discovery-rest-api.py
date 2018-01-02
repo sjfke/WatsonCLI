@@ -742,8 +742,15 @@ if __name__ == "__main__":
             elif args.raw:
                 print result
             else:
+                title = "Environments:"
+                print title + os.linesep + ("=" * len(title))
                 for i, val in enumerate(result):
-                    print "{0}: id={1[environment_id]}{2}name={1[name]}{2}descr={1[description]}{2}".format(i, val, args.separator)
+                    print "{0}:{2}configuration_id: {1[environment_id]}{2}name: {1[name]}{2}description: {1[description]}{2}".format(i, val, args.separator),
+                    if 'created' in val:
+                        print "{1}created: {0[created]}".format(val, args.separator),
+                    if 'updated' in val:
+                        print "{1}updated: {0[updated]}".format(val, args.separator),
+                    print
 
         elif list_lower == 'configurations':
             result = list_configurations(credentials=credentials, envid=envid, raw=args.raw)
@@ -752,8 +759,15 @@ if __name__ == "__main__":
             elif args.raw:
                 print result
             else:
+                title = "Configurations (EnvID: {0}):".format(envid)
+                print title + os.linesep + ("=" * len(title))                
                 for i, val in enumerate(result):
-                    print "{0}: id={1[configuration_id]}{2}name={1[name]}{2}descr={1[description]}{2}created={1[created]}{2}updated={1[updated]}".format(i, val, args.separator)
+                    print "{0}:{2}configuration_id: {1[configuration_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
+                    if 'created' in val:
+                        print "{1}created: {0[created]}".format(val, args.separator),
+                    if 'updated' in val:
+                        print "{1}updated: {0[updated]}".format(val, args.separator),
+                    print
 
         elif list_lower == 'collections':
             result = list_collections(credentials=credentials, envid=envid, raw=args.raw)
@@ -762,14 +776,17 @@ if __name__ == "__main__":
             elif args.raw:
                 print result
             else:
+                title = "Collections (EnvID: {0}):".format(envid)
+                print title + os.linesep + ("=" * len(title))
                 for i, val in enumerate(result):
-                    print "{0}: id={1[collection_id]}{2}name={1[name]}{2}descr={1[description]}{2}lang={1[language]}{2}status={1[status]}".format(i, val, args.separator),
+                    print "{0}:{2}configuration_id: {1[collection_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
+                    print "{1}lang: {0[language]}{1}status: {0[status]}".format(val, args.separator),
                     if 'configuration_id' in val:
-                        print "{1}cfgid={0[configuration_id]}".format(val, args.separator),
+                        print "{1}configuration_id: {0[configuration_id]}".format(val, args.separator),
                     if 'created' in val:
-                        print "{1}created={0[created]}".format(val, args.separator),
+                        print "{1}created: {0[created]}".format(val, args.separator),
                     if 'updated' in val:
-                        print "{1}updated={0[updated]}".format(val, args.separator),
+                        print "{1}updated: {0[updated]}".format(val, args.separator),
 
                     print
 
@@ -779,9 +796,11 @@ if __name__ == "__main__":
             colid = colids[args.colid]
             result = list_documents(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
             if result is None:
-                print "Environment: '{0}'".format(envid)
-                print "Collection: '{0}'".format(colid)
-                print "  No documents found"
+                title = "Documents (EnvID: {0}):".format(envid)
+                print title + os.linesep + ("=" * len(title)),
+                print "{1}Collection: '{0}'".format(colid, args.separator),
+                print "{0}No documents found".format(args.separator),
+                print
             elif args.raw:
                 print result
 
