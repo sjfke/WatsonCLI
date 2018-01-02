@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import json
+import yaml
 import requests
 
 
@@ -243,6 +244,7 @@ def list_documents(credentials, envid, colid=None, raw=True):
             credentials (dictionary): Watson credentials
             envid (str): Watson environment_id
             colid (str): Watson collection_id
+            raw (boolean): JSON output
 
         Returns:
             str: JSON results
@@ -284,19 +286,74 @@ def list_documents(credentials, envid, colid=None, raw=True):
     return "list_documents({0},{1},{2})".format(credentials, envid, colid)
 
 
-def list_environment(credentials, envid):
+def list_environment(credentials, envid, raw=True):
     """ Return Watson Discovery Environment Details
 
         Args:
             credentials (dictionary): Watson credentials
             envid (str): Watson environment_id
+            raw (boolean): JSON output
 
         Returns:
             str: JSON results
 
     """
 
-    return "list_environment({0},{1})".format(credentials, envid)
+    if envid == -1:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
+
+#     GET /v1/environments/{environment_id}
+#     curl -u "{username}":"{password}"
+#      "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}?version=2017-11-07"
+
+    api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
+    api += '/' + envid
+    payload = {}
+    payload['version'] = credentials['version']
+
+    r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
+    if args.verbose >= 1:
+        print('Request: ' + r.url)
+
+#     {
+#       "environment_id" : "71cac327-84eb-4327-81da-24d49f14a445",
+#       "name" : "test api",
+#       "description" : "why not",
+#       "created" : "2017-12-26T19:42:05.004Z",
+#       "updated" : "2017-12-26T19:42:05.004Z",
+#       "status" : "active",
+#       "read_only" : false,
+#       "index_capacity" : {
+#         "documents" : {
+#           "available" : 0,
+#           "maximum_allowed" : 2000
+#         },
+#         "disk_usage" : {
+#           "used_bytes" : 162,
+#           "maximum_allowed_bytes" : 200000000
+#         },
+#         "collections" : {
+#           "available" : 1,
+#           "maximum_allowed" : 2
+#         }
+#       }
+#     }
+#     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
+#     print(r.text)
+    if r.status_code != requests.codes.ok:
+        if args.verbose >= 1:
+            print "List environment Failed: {0}".format(r.status_code)
+            
+        return None
+    else:
+        if raw:
+            return r.text
+        else:
+            environment = json.loads(r.text)
+            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True)
+
+    return "Unknown Error: list_environment({0})".format(envid)
 
 
 def list_configuration(credentials, envid, cfgid):
@@ -492,9 +549,9 @@ if __name__ == "__main__":
     parser.add_argument('--cfgid', type=int, default=-1, help='configuration index')
     parser.add_argument('--colid', type=int, default=-1, help='collection index')
     parser.add_argument('--docid', type=int, default=-1, help='document index')
-    parser.add_argument('-a', '--auth', default='.watson.cfg', help='Watson credentials')
+    parser.add_argument('-a', '--auth', default='.watson.cfg', help='Watson credentials file')
     parser.add_argument('--raw', help='JSON output', default=False, action='store_true')
-    parser.add_argument('-s', '--separator', help='delimited', default='\n  ')
+    parser.add_argument('-s', '--separator', help='field delimiter', default='\n  ')
     parser.add_argument('-v', '--verbose', action='count', default=0)
     args = parser.parse_args()
     if args.verbose >= 1:
@@ -524,7 +581,7 @@ if __name__ == "__main__":
             sys.exit(1)
 
         if list_lower == 'environments':
-            result = list_environments(credentials=credentials, raw=args.debug)
+            result = list_environments(credentials=credentials, raw=args.raw)
             if result is None:
                 print "No Environments?"
                 sys.exit(1)
@@ -568,12 +625,16 @@ if __name__ == "__main__":
             colid = colids[args.colid]
             result = list_documents(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
             if result is None:
-                print "No documents for collections, '{0}'".format(colid)
+                print "Environment: '{0}'".format(envid)
+                print "Collection: '{0}'".format(colid)
+                print "  No documents found"
             elif args.raw:
                 print result
 
         elif list_lower == 'environment':
-            result = list_environment(credentials=credentials, envid=envid)
+            result = list_environment(credentials=credentials, envid=envid, raw=args.raw)
+            title = "Environment: {0}".format(envid)
+            print title + os.linesep + ("=" * len(title))
             print result
         elif list_lower == 'configuration':
             result = list_configuration(credentials=credentials, envid=envid, cfgid=args.cfgid)
