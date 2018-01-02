@@ -580,7 +580,7 @@ def list_environments_summary(cred):
     return results
 
 
-def get_environment_ids(cred):
+def get_environment_ids(credentials):
     """ Return a List of Watson Discovery Environments Id
 
         Args:
@@ -592,7 +592,7 @@ def get_environment_ids(cred):
     """
 
     import json
-    envs = json.loads(list_environments(cred))
+    envs = json.loads(list_environments(credentials))
     results = []
     for env in envs['environments']:
         results.append(env['environment_id'])
@@ -712,7 +712,7 @@ if __name__ == "__main__":
         print "watson-cfg: '{0}'".format(args.auth)
 
     credentials = get_watson_credentials(args.auth)
-    envids = get_environment_ids(cred=credentials)
+    envids = get_environment_ids(credentials=credentials)
 
     create_allowed = ['environment', 'collection']
     delete_allowed = ['environment', 'configuration', 'collection', 'document']
@@ -745,7 +745,7 @@ if __name__ == "__main__":
                 title = "Environments:"
                 print title + os.linesep + ("=" * len(title))
                 for i, val in enumerate(result):
-                    print "{0}:{2}configuration_id: {1[environment_id]}{2}name: {1[name]}{2}description: {1[description]}{2}".format(i, val, args.separator),
+                    print "{0:d}:{2}configuration_id: {1[environment_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
                     if 'created' in val:
                         print "{1}created: {0[created]}".format(val, args.separator),
                     if 'updated' in val:
@@ -762,7 +762,7 @@ if __name__ == "__main__":
                 title = "Configurations (EnvID: {0}):".format(envid)
                 print title + os.linesep + ("=" * len(title))                
                 for i, val in enumerate(result):
-                    print "{0}:{2}configuration_id: {1[configuration_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
+                    print "{0:d}:{2}configuration_id: {1[configuration_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
                     if 'created' in val:
                         print "{1}created: {0[created]}".format(val, args.separator),
                     if 'updated' in val:
@@ -779,7 +779,7 @@ if __name__ == "__main__":
                 title = "Collections (EnvID: {0}):".format(envid)
                 print title + os.linesep + ("=" * len(title))
                 for i, val in enumerate(result):
-                    print "{0}:{2}configuration_id: {1[collection_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
+                    print "{0:d}:{2}configuration_id: {1[collection_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
                     print "{1}lang: {0[language]}{1}status: {0[status]}".format(val, args.separator),
                     if 'configuration_id' in val:
                         print "{1}configuration_id: {0[configuration_id]}".format(val, args.separator),
@@ -803,6 +803,9 @@ if __name__ == "__main__":
                 print
             elif args.raw:
                 print result
+            else:
+                # need to print documents
+                pass
 
         elif list_lower == 'environment':
             result = list_environment(credentials=credentials, envid=envid, raw=args.raw)
