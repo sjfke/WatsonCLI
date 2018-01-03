@@ -767,10 +767,19 @@ if __name__ == "__main__":
 
         list_lower = args.list.lower()
 
-        if list_lower == 'environments':
+        if args.envid is not None:
+            try:
+                envid = envids[args.envid]
+            except IndexError:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0}".format(args.envid)
+                sys.exit(1)
+            except TypeError as e:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1}; {0}".format(e, args.envid)
+                sys.exit(1)
+        elif list_lower == 'environments':
             pass
-        elif args.envid < len(envids) and args.envid >= 0:
-            envid = envids[args.envid]
         else:
             print "Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0])
             sys.exit(1)
@@ -832,9 +841,18 @@ if __name__ == "__main__":
                     print
 
         elif list_lower == 'documents':
-            envid = envids[args.envid]
-            colids = get_collections_ids(credentials, envid)
-            colid = colids[args.colid]
+            try:
+                colids = get_collections_ids(credentials, envid)
+                colid = colids[args.colid]
+            except IndexError:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0}; colid={1}".format(args.envid, args.colid)
+                sys.exit(1)
+            except TypeError as e:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
+                sys.exit(1)
+
             result = list_documents(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
             print "Warning: this appears not too work?"
             if result is None:
@@ -863,7 +881,13 @@ if __name__ == "__main__":
                 print title + os.linesep + ("=" * len(title))
                 print result
             except IndexError:
-                print "Invalid {1}; hint try {0} -L configurations --envid {2}".format(sys.argv[0], 'cfgid', args.envid)
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0}; cfgid={1}".format(args.envid, args.cfgid)
+                sys.exit(1)
+            except TypeError as e:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1}; cfgid={2}; {0}".format(e, args.envid, args.cfgid)
+                sys.exit(1)
 
         elif list_lower == 'collection':
             colids = get_collections_ids(credentials, envid)
@@ -874,7 +898,13 @@ if __name__ == "__main__":
                 print title + os.linesep + ("=" * len(title))
                 print result
             except IndexError:
-                print "Invalid {1}; hint try {0} -L collections --envid {2}".format(sys.argv[0], 'colid', args.envid)
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0}; colid={1}".format(args.envid, args.colid)
+                sys.exit(1)
+            except TypeError as e:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
+                sys.exit(1)
 
         elif list_lower == 'document':
             colids = get_collections_ids(credentials, envid)
@@ -882,12 +912,18 @@ if __name__ == "__main__":
                 colid = colids[args.colid]
                 docids = get_document_ids(credentials=credentials, envid=envid, colid=colid)
                 docid = docids[args.docid]
-                result = list_document(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
+                result = list_document(credentials=credentials, envid=envid, colid=colid, docid=docid, raw=args.raw)
                 title = "Document: {0}".format(docid)
                 print title + os.linesep + ("=" * len(title))
                 print result
             except IndexError:
-                print "Invalid {1}; hint try {0} -L documents --envid {2}".format(sys.argv[0], 'colid', args.envid)
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0}; colid={1}; docid={2}".format(args.envid, args.colid, args.docid)
+                sys.exit(1)
+            except TypeError as e:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1}; colid={2}; docid={3}; {0}".format(e, args.envid, args.colid, args.docid)
+                sys.exit(1)
 
         else:
             print "Error: invalid List option, '{0}'".format(args.list)
@@ -905,33 +941,33 @@ if __name__ == "__main__":
         except IndexError:
             print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
             print " envid={0}; colid={1}".format(args.envid, args.colid)
+            sys.exit(1)
         except TypeError as e:
             print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
             print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
             sys.exit(1)
 
-    elif args.environment >= 0:
-        if args.environment < len(envids):
-            envid = envids[args.environment]
-            result = get_environment_summary(cred=credentials, envid=envid)
-            print result
-        else:
-            print "invalid index, '{0:d}' # try: {1} --list".format(args.environment, sys.argv[0])
-            sys.exit(1)
     elif args.create_environment:
         create_discovery_environment(cred=credentials, name=args.create, descr=args.description)
+
     elif args.delete and args.delete >= 0:
-        if args.environment < len(envids):
+        try:
             envid = envids[args.environment]
             result = delete_discovery_environment(cred=credentials, envid=envid)
             print result
-        else:
-            print "invalid index, '{0:d}' # try: {1} --list".format(args.environment, sys.argv[0])
+        except IndexError:
+            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+            print " envid={0}; colid={1}".format(args.envid, args.colid)
+            sys.exit(1)
+        except TypeError as e:
+            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+            print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
             sys.exit(1)
 
     else:
-        print "bugger"
+        print "Unknown command"
         result = get_environment_ids(credentials)
-        print result
+        print parser.print_usage()
+        sys.exit(1)
 
     sys.exit(0)
