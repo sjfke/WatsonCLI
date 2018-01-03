@@ -10,16 +10,14 @@ import requests
 from _bsddb import api
 
 
+#===============================================================================
+# get_watson_credentials
+#===============================================================================
 def get_watson_credentials(filename):
-    """ Return a List of Watson Discovery Environments
-
-        Args:
-            cfg (str): Configuration file with Watson credentials
-
-        Returns:
-            dictionary: (username, password, version)
-
-    """
+    '''
+    Return a List of Watson Discovery Environments
+    :param filename: Configuration file with Watson credentials
+    '''
 
     if not os.access(filename, os.R_OK):
         print "Error: reading Watson credentials file '{0}: ".format(filename)
@@ -37,16 +35,14 @@ def get_watson_credentials(filename):
     return result
 
 
+#===============================================================================
+# list_environments
+#===============================================================================
 def list_environments(credentials, raw=True):
-    """ Return Watson Discovery Environments
-
-        Args:
-            credentials (dictionary): Watson credentials
-            raw (boolean): JSON output
-
-        Returns:
-            str: JSON results
-
+    """
+     Return Watson Discovery Environments
+    :param credentials: Watson credentials
+    :param raw: JSON output
     """
 
     api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
@@ -92,19 +88,17 @@ def list_environments(credentials, raw=True):
                 return None
 
 
+#===============================================================================
+# list_configurations
+#===============================================================================
 def list_configurations(credentials, envid, raw=True):
-    """ Return Watson Discovery Configurations
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            raw (boolean): JSON output
-
-        Returns:
-            str: JSON results
-
     """
-    if envid == -1:
+     Return Watson Discovery Configurations
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param raw:JSON results
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
@@ -152,18 +146,16 @@ def list_configurations(credentials, envid, raw=True):
                 return None
 
 
+#===============================================================================
+# get_configuration_ids
+#===============================================================================
 def get_configuration_ids(credentials, envid):
-    """ Return Watson Discovery Configurations
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envids (list): Watson environment_id's
-
-        Returns:
-            list: configuration_ids
-
     """
-    if envid == -1:
+     Return Watson Discovery Configurations
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
@@ -175,19 +167,17 @@ def get_configuration_ids(credentials, envid):
     return configuration_ids
 
 
+#===============================================================================
+# list_collections
+#===============================================================================
 def list_collections(credentials, envid, raw=True):
-    """ Return Watson Discovery Collections
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            raw (boolean): JSON output
-
-        Returns:
-            str: JSON results
-
     """
-    if envid == -1:
+     Return Watson Discovery Collections
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param raw: JSON output
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
@@ -238,18 +228,16 @@ def list_collections(credentials, envid, raw=True):
                 return None
 
 
+#===============================================================================
+# get_collections_ids
+#===============================================================================
 def get_collections_ids(credentials, envid):
-    """ Return Watson Discovery Collections
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envids (list): Watson environment_id's
-
-        Returns:
-            list: collection_ids
-
     """
-    if envid == -1:
+     Return Watson Discovery Collections
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
@@ -261,24 +249,22 @@ def get_collections_ids(credentials, envid):
     return collection_ids
 
 
+#===============================================================================
+# list_documents
+#===============================================================================
 def list_documents(credentials, envid, colid=None, raw=True):
-    """ Return Watson Discovery Documents
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            colid (str): Watson collection_id
-            raw (boolean): JSON output
-
-        Returns:
-            str: JSON results
-
     """
-    if envid == -1:
+     Return Watson Discovery Documents (broken does not work)
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param colid: Watson collection_id string
+    :param raw: JSON output
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
-    if colid == -1:
+    if colid is None:
         print "Missing collection_id; hint {0} -L configurations --envid {1}".format(sys.argv[0], envid)
         sys.exit(1)
 
@@ -310,18 +296,17 @@ def list_documents(credentials, envid, colid=None, raw=True):
     return "list_documents({0},{1},{2})".format(credentials, envid, colid)
 
 
+#===============================================================================
+# get_document_ids
+#===============================================================================
 def get_document_ids(credentials, envid, colid):
-    """ Return Watson Discovery Documents
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            colid (str): Watson collection_id
-
-        Returns:
-            list: document_ids
-
     """
-    if envid == -1:
+     Return Watson Discovery Documents
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param colid: Watson collection_id string
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
@@ -335,20 +320,18 @@ def get_document_ids(credentials, envid, colid):
     return document_ids
 
 
+#===============================================================================
+# list_environment
+#===============================================================================
 def list_environment(credentials, envid, raw=True):
-    """ Return Watson Discovery Environment Details
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            raw (boolean): JSON output
-
-        Returns:
-            str: JSON results
-
+    """
+     Return Watson Discovery Environment Details
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param raw: True JSON output, YAML otherwise 
     """
 
-    if envid == -1:
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
@@ -405,25 +388,23 @@ def list_environment(credentials, envid, raw=True):
     return "Unknown Error: list_environment({0})".format(envid)
 
 
+#===============================================================================
+# list_configuration
+#===============================================================================
 def list_configuration(credentials, envid, cfgid, raw=True):
-    """ Return Watson Discovery Configuration Details
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            cfgid (str): Watson configuration_id
-            raw (boolean): JSON output
-
-        Returns:
-            str: JSON or YAML results
-
+    """
+     Return Watson Discovery Configuration Details
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param cfgid: Watson configuration_id string
+    :param raw: JSON output (True), YAML otherwise
     """
 
-    if envid == -1:
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
-    if cfgid == -1:
+    if cfgid is None:
         print "Invalid cfgid, '{0}', hint try: {1} -L configurations --envid {2}".format(cfgid, sys.argv[0], envid)
         sys.exit(1)
 
@@ -457,24 +438,22 @@ def list_configuration(credentials, envid, cfgid, raw=True):
     return "Unknown Error: list_configuration({0})".format(envid)
 
 
+#===============================================================================
+# list_collection
+#===============================================================================
 def list_collection(credentials, envid, colid, raw=True):
-    """ Return Watson Discovery Collection Details
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            colid (str): Watson collection_id
-            raw (boolean): JSON or YAML output
-
-        Returns:
-            str: JSON or YAML results
-
     """
-    if envid == -1:
+     Return Watson Discovery Collection Details
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param colid: Watson collection_id string
+    :param raw: JSON or YAML output
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
-    if colid == -1:
+    if colid is None:
         print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], envid)
         sys.exit(1)
 
@@ -508,25 +487,23 @@ def list_collection(credentials, envid, colid, raw=True):
     return "Unknown Error: list_collecation({0})".format(envid)
 
 
+#===============================================================================
+# list_document
+#===============================================================================
 def list_document(credentials, envid, colid, docid, raw=True):
-    """ Return Watson Discovery Document Details
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            colid (str): Watson collection_id
-            docid (str): Watson document_id
-            raw (boolean): JSON or YAML output
-
-        Returns:
-            str: JSON results
-
     """
-    if envid == -1:
+     Return Watson Discovery Document Details
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param colid: Watson collection_id string
+    :param docid: Watson document_id string
+    :param raw: JSON or YAML output
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
-    if colid == -1:
+    if colid is None:
         print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], '<envid>')
         sys.exit(1)
 
@@ -560,15 +537,13 @@ def list_document(credentials, envid, colid, docid, raw=True):
     return "Unknown Error: list document({0})".format(envid)
 
 
+#===============================================================================
+# get_environment_ids
+#===============================================================================
 def get_environment_ids(credentials):
-    """ Return a List of Watson Discovery Environments Id
-
-        Args:
-            cred (dictionary): Watson credentials
-
-        Returns:
-            list: Watson Environment Ids
-
+    """
+     Return a List of Watson Discovery Environments Id
+    :param credentials: Watson credentials
     """
 
     import json
@@ -580,16 +555,14 @@ def get_environment_ids(credentials):
     return results
 
 
+#===============================================================================
+# get_environment_summary
+#===============================================================================
 def get_environment_summary(cred, envid):
-    """ Return Summary of Watson Discovery Environment
-
-        Args:
-            cred (dictionary): Watson credentials
-            envid (str): Watson environment_id
-
-        Returns:
-            str: JSON results
-
+    """
+     Return Summary of Watson Discovery Environment
+    :param cred: Watson credentials string
+    :param envid: Watson environment_id string
     """
 
     import json
@@ -607,17 +580,15 @@ def get_environment_summary(cred, envid):
     return r.text
 
 
+#===============================================================================
+# create_discovery_environment
+#===============================================================================
 def create_discovery_environment(cred, name, descr):
-    """ Create Discovery Environment (REST + post)
-
-        Args:
-            cred (dictionary): Watson Credentials (username, password, version)
-            name (str): mandatory environment name
-            descr (str): optional environment description
-
-        Returns:
-            str: JSON results
-
+    """
+     Create Discovery Environment (REST + post)
+    :param cred: Watson Credentials (username, password, version)
+    :param name: mandatory environment name
+    :param descr: optional environment description
     """
     import json
     import requests
@@ -634,27 +605,29 @@ def create_discovery_environment(cred, name, descr):
 
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
     # print(r.text)
-    if r.status_code == requests.codes.ok:
+    if r.status_code == requests.codes.ok or r.status_code == requests.codes.created:
         return r.text
     else:
         print "Create Environment Failed: {0}".format(r.status_code)
         return None
 
 
+#===============================================================================
+# delete_discovery_environment
+#===============================================================================
 def delete_discovery_environment(cred, envid):
-    """ Delete Discovery Environment (REST + post)
-
-        Args:
-            cred (dictionary): Watson Credentials (username, password, version)
-            envid (str): mandatory environment_id
-
-        Returns:
-            str: JSON results
-
+    """
+     Delete Discovery Environment (REST + post)
+    :param cred: Watson Credentials (username, password, version)
+    :param envid: mandatory environment_id string
     """
     import json
     import requests
 
+    if envid is None:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
+        
     api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
     api += '/' + envid
     payload = {}
@@ -667,6 +640,9 @@ def delete_discovery_environment(cred, envid):
     return r.text
 
 
+#===============================================================================
+# upload_document
+#===============================================================================
 def upload_document(credentials, envid, colid, file_name, raw=True):
     '''
     Upload a document into a collection in the environment
@@ -677,11 +653,11 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
     :param raw: True (JSON), False (YAML)
     '''
 
-    if envid == -1:
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
-    if colid == -1:
+    if colid is None:
         print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], envid)
         sys.exit(1)
 
@@ -727,9 +703,11 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
         return None
 
 
+#===============================================================================
 # https://www.ibm.com/watson/developercloud/discovery/api/v1/
 # https://console.bluemix.net/docs/services/discovery/getting-started.html#getting-started-with-the-api
-
+# __main__
+#===============================================================================
 if __name__ == "__main__":
     watson_cfg_file = os.path.join(os.getcwd(), '.watson.cfg')
     parser = argparse.ArgumentParser(description='Discovery REST interface')
