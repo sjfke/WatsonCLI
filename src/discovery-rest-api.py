@@ -7,18 +7,17 @@ import sys
 import json
 import yaml
 import requests
+from _bsddb import api
 
 
+#===============================================================================
+# get_watson_credentials
+#===============================================================================
 def get_watson_credentials(filename):
-    """ Return a List of Watson Discovery Environments
-
-        Args:
-            cfg (str): Configuration file with Watson credentials
-
-        Returns:
-            dictionary: (username, password, version)
-
-    """
+    '''
+    Return a List of Watson Discovery Environments
+    :param filename: Configuration file with Watson credentials
+    '''
 
     if not os.access(filename, os.R_OK):
         print "Error: reading Watson credentials file '{0}: ".format(filename)
@@ -36,16 +35,14 @@ def get_watson_credentials(filename):
     return result
 
 
+#===============================================================================
+# list_environments
+#===============================================================================
 def list_environments(credentials, raw=True):
-    """ Return Watson Discovery Environments
-
-        Args:
-            credentials (dictionary): Watson credentials
-            raw (boolean): JSON output
-
-        Returns:
-            str: JSON results
-
+    """
+     Return Watson Discovery Environments
+    :param credentials: Watson credentials
+    :param raw: JSON output
     """
 
     api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
@@ -91,19 +88,17 @@ def list_environments(credentials, raw=True):
                 return None
 
 
+#===============================================================================
+# list_configurations
+#===============================================================================
 def list_configurations(credentials, envid, raw=True):
-    """ Return Watson Discovery Configurations
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            raw (boolean): JSON output
-
-        Returns:
-            str: JSON results
-
     """
-    if envid == -1:
+     Return Watson Discovery Configurations
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param raw:JSON results
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
@@ -151,18 +146,16 @@ def list_configurations(credentials, envid, raw=True):
                 return None
 
 
+#===============================================================================
+# get_configuration_ids
+#===============================================================================
 def get_configuration_ids(credentials, envid):
-    """ Return Watson Discovery Configurations
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envids (list): Watson environment_id's
-
-        Returns:
-            list: configuration_ids
-
     """
-    if envid == -1:
+     Return Watson Discovery Configurations
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
@@ -174,19 +167,17 @@ def get_configuration_ids(credentials, envid):
     return configuration_ids
 
 
+#===============================================================================
+# list_collections
+#===============================================================================
 def list_collections(credentials, envid, raw=True):
-    """ Return Watson Discovery Collections
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            raw (boolean): JSON output
-
-        Returns:
-            str: JSON results
-
     """
-    if envid == -1:
+     Return Watson Discovery Collections
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param raw: JSON output
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
@@ -237,18 +228,16 @@ def list_collections(credentials, envid, raw=True):
                 return None
 
 
+#===============================================================================
+# get_collections_ids
+#===============================================================================
 def get_collections_ids(credentials, envid):
-    """ Return Watson Discovery Collections
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envids (list): Watson environment_id's
-
-        Returns:
-            list: collection_ids
-
     """
-    if envid == -1:
+     Return Watson Discovery Collections
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
@@ -260,24 +249,22 @@ def get_collections_ids(credentials, envid):
     return collection_ids
 
 
+#===============================================================================
+# list_documents
+#===============================================================================
 def list_documents(credentials, envid, colid=None, raw=True):
-    """ Return Watson Discovery Documents
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            colid (str): Watson collection_id
-            raw (boolean): JSON output
-
-        Returns:
-            str: JSON results
-
     """
-    if envid == -1:
+     Return Watson Discovery Documents (broken does not work)
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param colid: Watson collection_id string
+    :param raw: JSON output
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
-    if colid == -1:
+    if colid is None:
         print "Missing collection_id; hint {0} -L configurations --envid {1}".format(sys.argv[0], envid)
         sys.exit(1)
 
@@ -309,18 +296,17 @@ def list_documents(credentials, envid, colid=None, raw=True):
     return "list_documents({0},{1},{2})".format(credentials, envid, colid)
 
 
+#===============================================================================
+# get_document_ids
+#===============================================================================
 def get_document_ids(credentials, envid, colid):
-    """ Return Watson Discovery Documents
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            colid (str): Watson collection_id
-
-        Returns:
-            list: document_ids
-
     """
-    if envid == -1:
+     Return Watson Discovery Documents
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param colid: Watson collection_id string
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
@@ -334,20 +320,18 @@ def get_document_ids(credentials, envid, colid):
     return document_ids
 
 
+#===============================================================================
+# list_environment
+#===============================================================================
 def list_environment(credentials, envid, raw=True):
-    """ Return Watson Discovery Environment Details
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            raw (boolean): JSON output
-
-        Returns:
-            str: JSON results
-
+    """
+     Return Watson Discovery Environment Details
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param raw: True JSON output, YAML otherwise 
     """
 
-    if envid == -1:
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
@@ -404,25 +388,23 @@ def list_environment(credentials, envid, raw=True):
     return "Unknown Error: list_environment({0})".format(envid)
 
 
+#===============================================================================
+# list_configuration
+#===============================================================================
 def list_configuration(credentials, envid, cfgid, raw=True):
-    """ Return Watson Discovery Configuration Details
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            cfgid (str): Watson configuration_id
-            raw (boolean): JSON output
-
-        Returns:
-            str: JSON or YAML results
-
+    """
+     Return Watson Discovery Configuration Details
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param cfgid: Watson configuration_id string
+    :param raw: JSON output (True), YAML otherwise
     """
 
-    if envid == -1:
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
-    if cfgid == -1:
+    if cfgid is None:
         print "Invalid cfgid, '{0}', hint try: {1} -L configurations --envid {2}".format(cfgid, sys.argv[0], envid)
         sys.exit(1)
 
@@ -456,24 +438,22 @@ def list_configuration(credentials, envid, cfgid, raw=True):
     return "Unknown Error: list_configuration({0})".format(envid)
 
 
+#===============================================================================
+# list_collection
+#===============================================================================
 def list_collection(credentials, envid, colid, raw=True):
-    """ Return Watson Discovery Collection Details
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            colid (str): Watson collection_id
-            raw (boolean): JSON or YAML output
-
-        Returns:
-            str: JSON or YAML results
-
     """
-    if envid == -1:
+     Return Watson Discovery Collection Details
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param colid: Watson collection_id string
+    :param raw: JSON or YAML output
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
-    if colid == -1:
+    if colid is None:
         print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], envid)
         sys.exit(1)
 
@@ -507,25 +487,23 @@ def list_collection(credentials, envid, colid, raw=True):
     return "Unknown Error: list_collecation({0})".format(envid)
 
 
+#===============================================================================
+# list_document
+#===============================================================================
 def list_document(credentials, envid, colid, docid, raw=True):
-    """ Return Watson Discovery Document Details
-
-        Args:
-            credentials (dictionary): Watson credentials
-            envid (str): Watson environment_id
-            colid (str): Watson collection_id
-            docid (str): Watson document_id
-            raw (boolean): JSON or YAML output
-
-        Returns:
-            str: JSON results
-
     """
-    if envid == -1:
+     Return Watson Discovery Document Details
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param colid: Watson collection_id string
+    :param docid: Watson document_id string
+    :param raw: JSON or YAML output
+    """
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
-    if colid == -1:
+    if colid is None:
         print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], '<envid>')
         sys.exit(1)
 
@@ -559,15 +537,13 @@ def list_document(credentials, envid, colid, docid, raw=True):
     return "Unknown Error: list document({0})".format(envid)
 
 
+#===============================================================================
+# get_environment_ids
+#===============================================================================
 def get_environment_ids(credentials):
-    """ Return a List of Watson Discovery Environments Id
-
-        Args:
-            cred (dictionary): Watson credentials
-
-        Returns:
-            list: Watson Environment Ids
-
+    """
+     Return a List of Watson Discovery Environments Id
+    :param credentials: Watson credentials
     """
 
     import json
@@ -579,16 +555,14 @@ def get_environment_ids(credentials):
     return results
 
 
+#===============================================================================
+# get_environment_summary
+#===============================================================================
 def get_environment_summary(cred, envid):
-    """ Return Summary of Watson Discovery Environment
-
-        Args:
-            cred (dictionary): Watson credentials
-            envid (str): Watson environment_id
-
-        Returns:
-            str: JSON results
-
+    """
+     Return Summary of Watson Discovery Environment
+    :param cred: Watson credentials string
+    :param envid: Watson environment_id string
     """
 
     import json
@@ -606,17 +580,15 @@ def get_environment_summary(cred, envid):
     return r.text
 
 
+#===============================================================================
+# create_discovery_environment
+#===============================================================================
 def create_discovery_environment(cred, name, descr):
-    """ Create Discovery Environment (REST + post)
-
-        Args:
-            cred (dictionary): Watson Credentials (username, password, version)
-            name (str): mandatory environment name
-            descr (str): optional environment description
-
-        Returns:
-            str: JSON results
-
+    """
+     Create Discovery Environment (REST + post)
+    :param cred: Watson Credentials (username, password, version)
+    :param name: mandatory environment name
+    :param descr: optional environment description
     """
     import json
     import requests
@@ -633,27 +605,29 @@ def create_discovery_environment(cred, name, descr):
 
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
     # print(r.text)
-    if r.status_code == requests.codes.ok:
+    if r.status_code == requests.codes.ok or r.status_code == requests.codes.created:
         return r.text
     else:
         print "Create Environment Failed: {0}".format(r.status_code)
         return None
 
 
+#===============================================================================
+# delete_discovery_environment
+#===============================================================================
 def delete_discovery_environment(cred, envid):
-    """ Delete Discovery Environment (REST + post)
-
-        Args:
-            cred (dictionary): Watson Credentials (username, password, version)
-            envid (str): mandatory environment_id
-
-        Returns:
-            str: JSON results
-
+    """
+     Delete Discovery Environment (REST + post)
+    :param cred: Watson Credentials (username, password, version)
+    :param envid: mandatory environment_id string
     """
     import json
     import requests
 
+    if envid is None:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
+        
     api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
     api += '/' + envid
     payload = {}
@@ -665,6 +639,10 @@ def delete_discovery_environment(cred, envid):
 
     return r.text
 
+
+#===============================================================================
+# upload_document
+#===============================================================================
 def upload_document(credentials, envid, colid, file_name, raw=True):
     '''
     Upload a document into a collection in the environment
@@ -674,16 +652,16 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
     :param file_name: file to upload
     :param raw: True (JSON), False (YAML)
     '''
-   
-    if envid == -1:
+
+    if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
-    if colid == -1:
+    if colid is None:
         print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], envid)
         sys.exit(1)
 
-    if not ( os.path.isfile(file_name) and os.access(file_name, os.R_OK) ):
+    if not (os.path.isfile(file_name) and os.access(file_name, os.R_OK)):
         print "Filename not readable, '{0}'".format(file_name)
         sys.exit(1)
 
@@ -691,18 +669,20 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
 #     curl -X POST -u "{username}":"{password}" \
 #      -F file=@sample1.html
 #      "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
+    print "upload: envid={0}; colid={1}; fname={2}".format(envid, colid, file_name)
     api = "https://gateway.watsonplatform.net/discovery/api/v1"
     api += '/environments/' + envid + '/collections/' + colid + '/documents'
     api += '?version=' + credentials['version']
-    
+
+    return api
     # Supported formats (50 MB max).
-    # application/json, 
-    # application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, 
+    # application/json,
+    # application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document,
     # application/pdf,
     # text/html, and application/xhtml+xml
     # TODO: 2018.01.02 look at 'pip install python-magic' (import magic for detecting file types)
     mime_type = 'text/html'
-    
+
     files = {'file': (os.path.basename(file_name), open(file_name, 'rb'), mime_type, {'Expires': 0})}
     r = requests.post(api, files=files, auth=(credentials['username'], credentials['password']))
 
@@ -711,10 +691,10 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
 
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
     # print(r.text)
-    
+
     # 200 OK - Successful request
     # 202 Accepted - index progressing.
-    # 400 Bad Request - Invalid request if the request is incorrectly formatted. 
+    # 400 Bad Request - Invalid request if the request is incorrectly formatted.
     # 404 Not Found - The request specified a resource that was not found
     if r.status_code == requests.codes.ok or r.status_code == requests.codes.accepted:
         return r.text
@@ -723,9 +703,11 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
         return None
 
 
+#===============================================================================
 # https://www.ibm.com/watson/developercloud/discovery/api/v1/
 # https://console.bluemix.net/docs/services/discovery/getting-started.html#getting-started-with-the-api
-
+# __main__
+#===============================================================================
 if __name__ == "__main__":
     watson_cfg_file = os.path.join(os.getcwd(), '.watson.cfg')
     parser = argparse.ArgumentParser(description='Discovery REST interface')
@@ -736,10 +718,10 @@ if __name__ == "__main__":
     parser.add_argument('-U', '--update', help='(environment|configuration|collection|document)')
     parser.add_argument('-d', '--description', default=None, help='description for create command')
     parser.add_argument('-n', '--name', default=None, help='name for create command')
-    parser.add_argument('--envid', type=int, default=-1, help='environment index')
-    parser.add_argument('--cfgid', type=int, default=-1, help='configuration index')
-    parser.add_argument('--colid', type=int, default=-1, help='collection index')
-    parser.add_argument('--docid', type=int, default=-1, help='document index')
+    parser.add_argument('--envid', type=int, default=None, help='environment index')
+    parser.add_argument('--cfgid', type=int, default=None, help='configuration index')
+    parser.add_argument('--colid', type=int, default=None, help='collection index')
+    parser.add_argument('--docid', type=int, default=None, help='document index')
     parser.add_argument('-a', '--auth', default='.watson.cfg', help='Watson credentials file')
     parser.add_argument('--raw', help='JSON output', default=False, action='store_true')
     parser.add_argument('-s', '--separator', help='field delimiter', default='\n  ')
@@ -763,10 +745,19 @@ if __name__ == "__main__":
 
         list_lower = args.list.lower()
 
-        if list_lower == 'environments':
+        if args.envid is not None:
+            try:
+                envid = envids[args.envid]
+            except IndexError:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0}".format(args.envid)
+                sys.exit(1)
+            except TypeError as e:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1}; {0}".format(e, args.envid)
+                sys.exit(1)
+        elif list_lower == 'environments':
             pass
-        elif args.envid < len(envids) and args.envid >= 0:
-            envid = envids[args.envid]
         else:
             print "Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0])
             sys.exit(1)
@@ -797,7 +788,7 @@ if __name__ == "__main__":
                 print result
             else:
                 title = "Configurations (EnvID: {0}):".format(envid)
-                print title + os.linesep + ("=" * len(title))                
+                print title + os.linesep + ("=" * len(title))
                 for i, val in enumerate(result):
                     print "{0:d}:{2}configuration_id: {1[configuration_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
                     if 'created' in val:
@@ -828,9 +819,18 @@ if __name__ == "__main__":
                     print
 
         elif list_lower == 'documents':
-            envid = envids[args.envid]
-            colids = get_collections_ids(credentials, envid)
-            colid = colids[args.colid]
+            try:
+                colids = get_collections_ids(credentials, envid)
+                colid = colids[args.colid]
+            except IndexError:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0}; colid={1}".format(args.envid, args.colid)
+                sys.exit(1)
+            except TypeError as e:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
+                sys.exit(1)
+
             result = list_documents(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
             print "Warning: this appears not too work?"
             if result is None:
@@ -859,7 +859,13 @@ if __name__ == "__main__":
                 print title + os.linesep + ("=" * len(title))
                 print result
             except IndexError:
-                print "Invalid {1}; hint try {0} -L configurations --envid {2}".format(sys.argv[0], 'cfgid', args.envid)
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0}; cfgid={1}".format(args.envid, args.cfgid)
+                sys.exit(1)
+            except TypeError as e:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1}; cfgid={2}; {0}".format(e, args.envid, args.cfgid)
+                sys.exit(1)
 
         elif list_lower == 'collection':
             colids = get_collections_ids(credentials, envid)
@@ -870,7 +876,13 @@ if __name__ == "__main__":
                 print title + os.linesep + ("=" * len(title))
                 print result
             except IndexError:
-                print "Invalid {1}; hint try {0} -L collections --envid {2}".format(sys.argv[0], 'colid', args.envid)
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0}; colid={1}".format(args.envid, args.colid)
+                sys.exit(1)
+            except TypeError as e:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
+                sys.exit(1)
 
         elif list_lower == 'document':
             colids = get_collections_ids(credentials, envid)
@@ -878,51 +890,62 @@ if __name__ == "__main__":
                 colid = colids[args.colid]
                 docids = get_document_ids(credentials=credentials, envid=envid, colid=colid)
                 docid = docids[args.docid]
-                result = list_document(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
+                result = list_document(credentials=credentials, envid=envid, colid=colid, docid=docid, raw=args.raw)
                 title = "Document: {0}".format(docid)
                 print title + os.linesep + ("=" * len(title))
                 print result
             except IndexError:
-                print "Invalid {1}; hint try {0} -L documents --envid {2}".format(sys.argv[0], 'colid', args.envid)
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0}; colid={1}; docid={2}".format(args.envid, args.colid, args.docid)
+                sys.exit(1)
+            except TypeError as e:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1}; colid={2}; docid={3}; {0}".format(e, args.envid, args.colid, args.docid)
+                sys.exit(1)
 
         else:
             print "Error: invalid List option, '{0}'".format(args.list)
             sys.exit(1)
 
     elif args.add:
-            try:
-                envid = envids[args.envid]
-                colids = get_collections_ids(credentials, envid)
-                colid = colids[args.colid]
-                result = upload_document(credentials=credentials, envid=envid, colid=colid, file_name=args.add, raw=args.raw)
-                title = "Add Document: '{0}' (ColID {1})".format(args.add, colid)
-                print title + os.linesep + ("=" * len(title))
-                print result
-            except IndexError:
-                print "Invalid {1}; hint try {0} -L collections --envid {2}".format(sys.argv[0], 'colid', args.envid)
-        
-    elif args.environment >= 0:
-        if args.environment < len(envids):
-            envid = envids[args.environment]
-            result = get_environment_summary(cred=credentials, envid=envid)
+        try:
+            envid = envids[args.envid]
+            colids = get_collections_ids(credentials, envid)
+            colid = colids[args.colid]
+            result = upload_document(credentials=credentials, envid=envid, colid=colid, file_name=args.add, raw=args.raw)
+            title = "Add Document: '{0}' (ColID {1})".format(args.add, colid)
+            print title + os.linesep + ("=" * len(title))
             print result
-        else:
-            print "invalid index, '{0:d}' # try: {1} --list".format(args.environment, sys.argv[0])
+        except IndexError:
+            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+            print " envid={0}; colid={1}".format(args.envid, args.colid)
             sys.exit(1)
+        except TypeError as e:
+            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+            print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
+            sys.exit(1)
+
     elif args.create_environment:
         create_discovery_environment(cred=credentials, name=args.create, descr=args.description)
+
     elif args.delete and args.delete >= 0:
-        if args.environment < len(envids):
+        try:
             envid = envids[args.environment]
             result = delete_discovery_environment(cred=credentials, envid=envid)
             print result
-        else:
-            print "invalid index, '{0:d}' # try: {1} --list".format(args.environment, sys.argv[0])
+        except IndexError:
+            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+            print " envid={0}; colid={1}".format(args.envid, args.colid)
+            sys.exit(1)
+        except TypeError as e:
+            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+            print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
             sys.exit(1)
 
     else:
-        print "bugger"
+        print "Unknown command"
         result = get_environment_ids(credentials)
-        print result
+        print parser.print_usage()
+        sys.exit(1)
 
     sys.exit(0)
