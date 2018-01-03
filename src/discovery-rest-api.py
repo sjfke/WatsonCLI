@@ -652,7 +652,8 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
     :param file_name: file to upload
     :param raw: True (JSON), False (YAML)
     '''
-
+    import magic
+    
     if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
@@ -674,14 +675,25 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
     api += '/environments/' + envid + '/collections/' + colid + '/documents'
     api += '?version=' + credentials['version']
 
-    return api
     # Supported formats (50 MB max).
     # application/json,
     # application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document,
     # application/pdf,
     # text/html, and application/xhtml+xml
-    # TODO: 2018.01.02 look at 'pip install python-magic' (import magic for detecting file types)
-    mime_type = 'text/html'
+    # 
+    # magic.from_file("../examples/file.txt", mime=True) >>> 'text/plain'
+    # magic.from_file("../examples/LinkedIn_Ella_Salzmann.pdf", mime=True) >>> 'application/pdf'
+    # magic.from_file("../examples/parameters.json", mime=True) >>>'text/plain'
+    # magic.from_file("../examples/missing-file.txt", mime=True)
+    # IOError: [Errno 2] No such file or directory: '../examples/files.txt'
+    mime_type = magic.from_file(file_name, mime=True)
+    if mime_type == 'text/html':
+        try:
+            json.loads(file_name)
+            mime_type = "application/json"
+        except ValueError:
+            pass
+
 
     files = {'file': (os.path.basename(file_name), open(file_name, 'rb'), mime_type, {'Expires': 0})}
     r = requests.post(api, files=files, auth=(credentials['username'], credentials['password']))
