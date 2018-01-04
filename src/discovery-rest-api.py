@@ -51,7 +51,7 @@ def list_environments(credentials, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "GET: {0}".format(r.url)
 
 #     {
 #       "environments" : [ {
@@ -111,7 +111,7 @@ def list_configurations(credentials, envid, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "GET: {}".format(r.url)
 
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
     # print(r.text)
@@ -192,23 +192,7 @@ def list_collections(credentials, envid, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
-
-    # return "list_collections({0},{1})".format(credentials,envid)
-    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-    # print(r.text)
-#     {
-#       "collections" : [ {
-#         "collection_id" : "5bbeb90b-08b6-4eb4-b5cf-82b7ed0aada1",
-#         "name" : "TestOne",
-#         "configuration_id" : "108f7bf9-9c16-43ec-853c-7c877b12b36b",
-#         "language" : "en",
-#         "status" : "active",
-#         "description" : null,
-#         "created" : "2017-12-26T19:44:07.225Z",
-#         "updated" : "2017-12-26T19:44:07.225Z"
-#       } ]
-#     }
+        print "GET: {0}".format(r.url)
 
     if r.status_code != requests.codes.ok:
         print "List Collections Failed: {0}".format(r.status_code)
@@ -518,7 +502,7 @@ def list_document(credentials, envid, colid, docid, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "GET: {0}".format(r.url)
 
 #     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
 #     print(r.text)
@@ -627,7 +611,7 @@ def delete_discovery_environment(cred, envid):
     if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
-        
+
     api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
     api += '/' + envid
     payload = {}
@@ -641,8 +625,113 @@ def delete_discovery_environment(cred, envid):
 
 
 #===============================================================================
+# create_collection
+#===============================================================================
+def create_collection(credentials, envid, name, cfgid, description=None, language='en', raw=True):
+    '''
+    Create Watson collection in the environment
+    :param credentials: Watson Credentials (username, password, version)
+    :param envid: mandatory environment_id string
+    :param cfgid: mandatory configuration_id string
+    :param description: optional description
+    :param language: defaults to 'en'
+    :param raw: True (JSON), False (YAML)
+    '''
+
+    # POST /v1/environments/{environment_id}/collections
+    # curl -X POST  -u "{username}":"{password}" -H "Content-Type: application/json" \
+    # -d '{
+    #   "name": "test_collection",
+    #   "description": "My test collection",
+    #   "configuration_id": "{configuration_id}",
+    #   "language": "en"
+    # }' "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections?version=2017-11-07"
+
+    # Example JSON body
+    # {
+    #   "name": "{collection_name}",
+    #   "description": "{description}",
+    #   "configuration_id": "{configuration_id}",
+    #   "language": "en"
+    # }
+
+    api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
+    api += '/' + envid + '/collections'
+    api += '?version=' + credentials['version']
+
+    data = {'name': name, 'description': description, 'configuration_id': cfgid, 'language': language}
+    r = requests.post(api, json=data, auth=(credentials['username'], credentials['password']))
+
+    if args.verbose >= 1:
+        print "POST: {0}".format(r.url)
+        print "DATA: {0}".format(data)
+
+    if r.status_code == requests.codes.ok or r.status_code == requests.codes.created:
+        if args.verbose >= 1:
+            print "{0}: Create Collection succeeded".format(r.status_code)
+            
+        if raw:
+            return r.text
+        else:
+            document = json.loads(r.text)
+            return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True)
+    else:
+        if args.verbose >= 1:
+            print "Create Collection Failed: {0}".format(r.status_code)
+
+        return None
+
+    print "Unknown Error: Create Collection({0})".format(envid)
+    sys.exit(1)
+
+
+#===============================================================================
+# delete_collection
+#===============================================================================
+def delete_collection(credentials, envid, colid, raw=True):
+    '''
+    Delete collection in Watson environment
+    :param credentials: Watson Credentials (username, password, version)
+    :param envid: mandatory environment_id string
+    :param colid: mandatory collection_id string
+    :param raw: True (JSON), False (YAML)
+    '''
+
+    if envid is None:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
+
+    if colid is None:
+        print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], envid)
+        sys.exit(1)
+
+    # DELETE /v1/environments/{environment_id}/collections/{collection_id}
+    # curl -u "{username}":"{password}" -X DELETE
+    # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}?version=2017-11-07"
+    api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
+    api += '/' + envid + '/collections/' + colid
+    payload = {}
+    payload['version'] = credentials['version']
+
+    r = requests.delete(api, params=payload, auth=(credentials['username'], credentials['password']))
+    if args.verbose >= 1:
+        print "DELETE {0}".format(r.url)
+
+    if raw:
+        return r.text
+    else:
+        document = json.loads(r.text)
+        return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True)
+
+    print "Unknown Error: delete_collection(envid={0}; cfgid={1})".format(envid, colid)
+    sys.exit(1)
+
+
+#===============================================================================
 # upload_document
 #===============================================================================
+
+
 def upload_document(credentials, envid, colid, file_name, raw=True):
     '''
     Upload a document into a collection in the environment
@@ -652,6 +741,7 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
     :param file_name: file to upload
     :param raw: True (JSON), False (YAML)
     '''
+    import magic
 
     if envid is None:
         print "Invalid envid, '{0}'".format(envid)
@@ -669,19 +759,31 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
 #     curl -X POST -u "{username}":"{password}" \
 #      -F file=@sample1.html
 #      "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
-    print "upload: envid={0}; colid={1}; fname={2}".format(envid, colid, file_name)
+    if args.verbose:
+        print "upload: envid={0}; colid={1}; fname={2}".format(envid, colid, file_name)
+
     api = "https://gateway.watsonplatform.net/discovery/api/v1"
     api += '/environments/' + envid + '/collections/' + colid + '/documents'
     api += '?version=' + credentials['version']
 
-    return api
     # Supported formats (50 MB max).
     # application/json,
     # application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document,
     # application/pdf,
     # text/html, and application/xhtml+xml
-    # TODO: 2018.01.02 look at 'pip install python-magic' (import magic for detecting file types)
-    mime_type = 'text/html'
+    #
+    # magic.from_file("../examples/file.txt", mime=True) >>> 'text/plain'
+    # magic.from_file("../examples/LinkedIn_Ella_Salzmann.pdf", mime=True) >>> 'application/pdf'
+    # magic.from_file("../examples/parameters.json", mime=True) >>>'text/plain'
+    # magic.from_file("../examples/missing-file.txt", mime=True)
+    # IOError: [Errno 2] No such file or directory: '../examples/files.txt'
+    mime_type = magic.from_file(file_name, mime=True)
+    if mime_type == 'text/html':
+        try:
+            json.loads(file_name)
+            mime_type = "application/json"
+        except ValueError:
+            pass
 
     files = {'file': (os.path.basename(file_name), open(file_name, 'rb'), mime_type, {'Expires': 0})}
     r = requests.post(api, files=files, auth=(credentials['username'], credentials['password']))
@@ -851,8 +953,8 @@ if __name__ == "__main__":
             print title + os.linesep + ("=" * len(title))
             print result
         elif list_lower == 'configuration':
-            cfgids = get_configuration_ids(credentials, envid)
             try:
+                cfgids = get_configuration_ids(credentials, envid)
                 cfgid = cfgids[args.cfgid]
                 result = list_configuration(credentials=credentials, envid=envid, cfgid=cfgid, raw=args.raw)
                 title = "Configuration: {0}".format(cfgid)
@@ -925,22 +1027,68 @@ if __name__ == "__main__":
             print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
             sys.exit(1)
 
-    elif args.create_environment:
-        create_discovery_environment(cred=credentials, name=args.create, descr=args.description)
+    elif args.create:
+        if not (args.create.lower() in create_allowed):
+            print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.list)
+            sys.exit(1)
 
-    elif args.delete and args.delete >= 0:
-        try:
-            envid = envids[args.environment]
-            result = delete_discovery_environment(cred=credentials, envid=envid)
-            print result
-        except IndexError:
-            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-            print " envid={0}; colid={1}".format(args.envid, args.colid)
+        create_lower = args.create.lower()
+        if args.envid is not None:
+            try:
+                envid = envids[args.envid]
+                if create_lower == 'environment':
+                    create_discovery_environment(cred=credentials, name=args.create, descr=args.description)
+                elif create_lower == 'collection':
+                    cfgids = get_configuration_ids(credentials, envid)
+                    cfgid = cfgids[args.cfgid]
+                    result = create_collection(credentials=credentials, envid=envid, name=args.name, cfgid=cfgid, description=args.description, raw=args.raw)
+                    print result
+            except IndexError:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0}; cfgid={1}".format(args.envid, args.cfgid)
+                sys.exit(1)
+            except TypeError as e:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1}; cfgid={2}; {0}".format(e, args.envid, args.cfgid)
+                sys.exit(1)
+        else:
+            print "Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0])
             sys.exit(1)
-        except TypeError as e:
-            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-            print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
+
+    elif args.delete:
+        if not (args.delete.lower() in delete_allowed):
+            print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.list)
             sys.exit(1)
+
+        delete_lower = args.delete.lower()
+        if args.envid is not None:
+            try:
+                envid = envids[args.envid]
+                if delete_lower == 'environment':
+                    delete_discovery_environment(cred=credential, envid=envid)
+                    result = delete_discovery_environment(cred=credentials, envid=envid)
+                    print result
+                    sys.exit(0)
+                elif delete_lower == 'collection':
+                    colids = get_collections_ids(credentials=credentials, envid=envid)
+                    if colids:
+                        colid = colids[args.colid]
+                        result = delete_collection(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
+                        print result
+                        sys.exit(0)
+                    else:
+                        print "No collections found?"
+                        sys.exit(1)
+            except IndexError:
+                print "Delete:"
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0}; colid={1}; cfgid={2}".format(args.envid, args.colid, args.cfgid)
+                sys.exit(1)
+            except TypeError as e:
+                print "Delete:"
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1}; colid={2}; cfgid={3}; {0}".format(e, args.envid, args.colid, args.cfgid)
+                sys.exit(1)
 
     else:
         print "Unknown command"
