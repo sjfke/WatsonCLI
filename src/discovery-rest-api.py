@@ -263,7 +263,7 @@ def list_documents(credentials, envid, colid=None, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "GET: {0}".format(r.url)
 
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
@@ -330,7 +330,7 @@ def list_environment(credentials, envid, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "GET: {0}".format(r.url)
 
 #     {
 #       "environment_id" : "71cac327-84eb-4327-81da-24d49f14a445",
@@ -403,7 +403,7 @@ def list_configuration(credentials, envid, cfgid, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "GET: {0}".format(r.url)
 
 #     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
 #     print(r.text)
@@ -452,7 +452,7 @@ def list_collection(credentials, envid, colid, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "GET: {0}".format(r.url)
 
 #     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
 #     print(r.text)
@@ -559,7 +559,7 @@ def get_environment_summary(cred, envid):
 
     r = requests.get(api, params=payload, auth=(cred['username'], cred['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "GET: {0}".format(r.url)
 
     return r.text
 
@@ -585,7 +585,8 @@ def create_discovery_environment(cred, name, descr):
     r = requests.post(api, json=data, auth=(cred['username'], cred['password']))
 
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "POST: {0}".format(r.url)
+        print "JSON: {0}".format(data)
 
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
     # print(r.text)
@@ -619,7 +620,7 @@ def delete_discovery_environment(cred, envid):
 
     r = requests.delete(api, params=payload, auth=(cred['username'], cred['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "DELETE: {0}".format(r.url)
 
     return r.text
 
@@ -789,7 +790,8 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
     r = requests.post(api, files=files, auth=(credentials['username'], credentials['password']))
 
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "POST: {0}".format(r.url)
+        print "FILE: {0}".format(file_name)
 
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
     # print(r.text)
