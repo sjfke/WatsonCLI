@@ -68,8 +68,6 @@ def list_environments(credentials, raw=True):
 #         "read_only" : false
 #       } ]
 #     }
-    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-    # print(r.text)
     if r.status_code != requests.codes.ok:
         print "List Collections Failed: {0}".format(r.status_code)
         return None
@@ -113,8 +111,6 @@ def list_configurations(credentials, envid, raw=True):
     if args.verbose >= 1:
         print "GET: {}".format(r.url)
 
-    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-    # print(r.text)
 #     {
 #       "collections" : [ {
 #         "collection_id" : "5bbeb90b-08b6-4eb4-b5cf-82b7ed0aada1",
@@ -263,7 +259,7 @@ def list_documents(credentials, envid, colid=None, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "GET: {0}".format(r.url)
 
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
@@ -330,7 +326,7 @@ def list_environment(credentials, envid, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "GET: {0}".format(r.url)
 
 #     {
 #       "environment_id" : "71cac327-84eb-4327-81da-24d49f14a445",
@@ -355,8 +351,7 @@ def list_environment(credentials, envid, raw=True):
 #         }
 #       }
 #     }
-#     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-#     print(r.text)
+
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
             print "List environment Failed: {0}".format(r.status_code)
@@ -403,10 +398,8 @@ def list_configuration(credentials, envid, cfgid, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "GET: {0}".format(r.url)
 
-#     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-#     print(r.text)
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
             print "List configuration Failed: {0}".format(r.status_code)
@@ -452,10 +445,8 @@ def list_collection(credentials, envid, colid, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "GET: {0}".format(r.url)
 
-#     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-#     print(r.text)
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
             print "List collection Failed: {0}".format(r.status_code)
@@ -504,8 +495,6 @@ def list_document(credentials, envid, colid, docid, raw=True):
     if args.verbose >= 1:
         print "GET: {0}".format(r.url)
 
-#     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-#     print(r.text)
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
             print "List document Failed: {0}".format(r.status_code)
@@ -559,15 +548,15 @@ def get_environment_summary(cred, envid):
 
     r = requests.get(api, params=payload, auth=(cred['username'], cred['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "GET: {0}".format(r.url)
 
     return r.text
 
 
 #===============================================================================
-# create_discovery_environment
+# create_environment
 #===============================================================================
-def create_discovery_environment(cred, name, descr):
+def create_environment(cred, name, descr):
     """
      Create Discovery Environment (REST + post)
     :param cred: Watson Credentials (username, password, version)
@@ -585,10 +574,9 @@ def create_discovery_environment(cred, name, descr):
     r = requests.post(api, json=data, auth=(cred['username'], cred['password']))
 
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "POST: {0}".format(r.url)
+        print "JSON: {0}".format(data)
 
-    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-    # print(r.text)
     if r.status_code == requests.codes.ok or r.status_code == requests.codes.created:
         return r.text
     else:
@@ -597,9 +585,9 @@ def create_discovery_environment(cred, name, descr):
 
 
 #===============================================================================
-# delete_discovery_environment
+# delete_environment
 #===============================================================================
-def delete_discovery_environment(cred, envid):
+def delete_environment(cred, envid):
     """
      Delete Discovery Environment (REST + post)
     :param cred: Watson Credentials (username, password, version)
@@ -619,7 +607,7 @@ def delete_discovery_environment(cred, envid):
 
     r = requests.delete(api, params=payload, auth=(cred['username'], cred['password']))
     if args.verbose >= 1:
-        print('Request: ' + r.url)
+        print "DELETE: {0}".format(r.url)
 
     return r.text
 
@@ -776,7 +764,7 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
     # magic.from_file("../examples/LinkedIn_Ella_Salzmann.pdf", mime=True) >>> 'application/pdf'
     # magic.from_file("../examples/parameters.json", mime=True) >>>'text/plain'
     # magic.from_file("../examples/missing-file.txt", mime=True)
-    # IOError: [Errno 2] No such file or directory: '../examples/files.txt'
+    #   IOError: [Errno 2] No such file or directory: '../examples/missing-file.txt'
     mime_type = magic.from_file(file_name, mime=True)
     if mime_type == 'text/html':
         try:
@@ -789,10 +777,8 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
     r = requests.post(api, files=files, auth=(credentials['username'], credentials['password']))
 
     if args.verbose >= 1:
-        print('Request: ' + r.url)
-
-    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-    # print(r.text)
+        print "POST: {0}".format(r.url)
+        print "FILE: {0}".format(file_name)
 
     # 200 OK - Successful request
     # 202 Accepted - index progressing.
@@ -845,7 +831,7 @@ if __name__ == "__main__":
             print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.list)
             sys.exit(1)
 
-        list_lower = args.list.lower()
+        command = args.list.lower()
 
         if args.envid is not None:
             try:
@@ -858,13 +844,13 @@ if __name__ == "__main__":
                 print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={1}; {0}".format(e, args.envid)
                 sys.exit(1)
-        elif list_lower == 'environments':
+        elif command == 'environments':
             pass
         else:
             print "Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0])
             sys.exit(1)
 
-        if list_lower == 'environments':
+        if command == 'environments':
             result = list_environments(credentials=credentials, raw=args.raw)
             if result is None:
                 print "No Environments?"
@@ -882,7 +868,7 @@ if __name__ == "__main__":
                         print "{1}updated: {0[updated]}".format(val, args.separator),
                     print
 
-        elif list_lower == 'configurations':
+        elif command == 'configurations':
             result = list_configurations(credentials=credentials, envid=envid, raw=args.raw)
             if result is None:
                 print "No configurations for, '{0}'".format(envid)
@@ -899,7 +885,7 @@ if __name__ == "__main__":
                         print "{1}updated: {0[updated]}".format(val, args.separator),
                     print
 
-        elif list_lower == 'collections':
+        elif command == 'collections':
             result = list_collections(credentials=credentials, envid=envid, raw=args.raw)
             if result is None:
                 print "No collections for, '{0}'".format(envid)
@@ -920,7 +906,7 @@ if __name__ == "__main__":
 
                     print
 
-        elif list_lower == 'documents':
+        elif command == 'documents':
             try:
                 colids = get_collections_ids(credentials, envid)
                 colid = colids[args.colid]
@@ -947,12 +933,12 @@ if __name__ == "__main__":
                 # need to print documents
                 pass
 
-        elif list_lower == 'environment':
+        elif command == 'environment':
             result = list_environment(credentials=credentials, envid=envid, raw=args.raw)
             title = "Environment: {0}".format(envid)
             print title + os.linesep + ("=" * len(title))
             print result
-        elif list_lower == 'configuration':
+        elif command == 'configuration':
             try:
                 cfgids = get_configuration_ids(credentials, envid)
                 cfgid = cfgids[args.cfgid]
@@ -969,7 +955,7 @@ if __name__ == "__main__":
                 print " envid={1}; cfgid={2}; {0}".format(e, args.envid, args.cfgid)
                 sys.exit(1)
 
-        elif list_lower == 'collection':
+        elif command == 'collection':
             colids = get_collections_ids(credentials, envid)
             try:
                 colid = colids[args.colid]
@@ -986,7 +972,7 @@ if __name__ == "__main__":
                 print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
                 sys.exit(1)
 
-        elif list_lower == 'document':
+        elif command == 'document':
             colids = get_collections_ids(credentials, envid)
             try:
                 colid = colids[args.colid]
@@ -1032,13 +1018,13 @@ if __name__ == "__main__":
             print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.list)
             sys.exit(1)
 
-        create_lower = args.create.lower()
+        command = args.create.lower()
         if args.envid is not None:
             try:
                 envid = envids[args.envid]
-                if create_lower == 'environment':
-                    create_discovery_environment(cred=credentials, name=args.create, descr=args.description)
-                elif create_lower == 'collection':
+                if command == 'environment':
+                    create_environment(credentials=credentials, name=args.create, descr=args.description)
+                elif command == 'collection':
                     cfgids = get_configuration_ids(credentials, envid)
                     cfgid = cfgids[args.cfgid]
                     result = create_collection(credentials=credentials, envid=envid, name=args.name, cfgid=cfgid, description=args.description, raw=args.raw)
@@ -1060,16 +1046,15 @@ if __name__ == "__main__":
             print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.list)
             sys.exit(1)
 
-        delete_lower = args.delete.lower()
+        command = args.delete.lower()
         if args.envid is not None:
             try:
                 envid = envids[args.envid]
-                if delete_lower == 'environment':
-                    delete_discovery_environment(cred=credential, envid=envid)
-                    result = delete_discovery_environment(cred=credentials, envid=envid)
+                if command == 'environment':
+                    result = delete_environment(credentials=credentials, envid=envid)
                     print result
                     sys.exit(0)
-                elif delete_lower == 'collection':
+                elif command == 'collection':
                     colids = get_collections_ids(credentials=credentials, envid=envid)
                     if colids:
                         colid = colids[args.colid]
@@ -1080,7 +1065,6 @@ if __name__ == "__main__":
                         print "No collections found?"
                         sys.exit(1)
             except IndexError:
-                print "Delete:"
                 print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={0}; colid={1}; cfgid={2}".format(args.envid, args.colid, args.cfgid)
                 sys.exit(1)
@@ -1092,7 +1076,6 @@ if __name__ == "__main__":
 
     else:
         print "Unknown command"
-        result = get_environment_ids(credentials)
         print parser.print_usage()
         sys.exit(1)
 

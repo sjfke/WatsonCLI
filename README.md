@@ -3,7 +3,7 @@ Collection of Python command line utilities for interacting with Watson Bluemix
 
 ## Discovery (REST)
 ```shell-session
-usage: discovery-rest-api.py [-h] [-C CREATE] [-D DELETE] [-L LIST]
+usage: discovery-rest-api.py [-h] [-A ADD] [-C CREATE] [-D DELETE] [-L LIST]
                              [-U UPDATE] [-d DESCRIPTION] [-n NAME]
                              [--envid ENVID] [--cfgid CFGID] [--colid COLID]
                              [--docid DOCID] [-a AUTH] [--raw] [-s SEPARATOR]
@@ -13,6 +13,7 @@ Discovery REST interface
 
 optional arguments:
   -h, --help            show this help message and exit
+  -A ADD, --add ADD     upload document
   -C CREATE, --create CREATE
                         (environment|collection)
   -D DELETE, --delete DELETE
