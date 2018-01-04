@@ -845,7 +845,7 @@ if __name__ == "__main__":
             print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.list)
             sys.exit(1)
 
-        list_lower = args.list.lower()
+        command = args.list.lower()
 
         if args.envid is not None:
             try:
@@ -858,13 +858,13 @@ if __name__ == "__main__":
                 print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={1}; {0}".format(e, args.envid)
                 sys.exit(1)
-        elif list_lower == 'environments':
+        elif command == 'environments':
             pass
         else:
             print "Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0])
             sys.exit(1)
 
-        if list_lower == 'environments':
+        if command == 'environments':
             result = list_environments(credentials=credentials, raw=args.raw)
             if result is None:
                 print "No Environments?"
@@ -882,7 +882,7 @@ if __name__ == "__main__":
                         print "{1}updated: {0[updated]}".format(val, args.separator),
                     print
 
-        elif list_lower == 'configurations':
+        elif command == 'configurations':
             result = list_configurations(credentials=credentials, envid=envid, raw=args.raw)
             if result is None:
                 print "No configurations for, '{0}'".format(envid)
@@ -899,7 +899,7 @@ if __name__ == "__main__":
                         print "{1}updated: {0[updated]}".format(val, args.separator),
                     print
 
-        elif list_lower == 'collections':
+        elif command == 'collections':
             result = list_collections(credentials=credentials, envid=envid, raw=args.raw)
             if result is None:
                 print "No collections for, '{0}'".format(envid)
@@ -920,7 +920,7 @@ if __name__ == "__main__":
 
                     print
 
-        elif list_lower == 'documents':
+        elif command == 'documents':
             try:
                 colids = get_collections_ids(credentials, envid)
                 colid = colids[args.colid]
@@ -947,12 +947,12 @@ if __name__ == "__main__":
                 # need to print documents
                 pass
 
-        elif list_lower == 'environment':
+        elif command == 'environment':
             result = list_environment(credentials=credentials, envid=envid, raw=args.raw)
             title = "Environment: {0}".format(envid)
             print title + os.linesep + ("=" * len(title))
             print result
-        elif list_lower == 'configuration':
+        elif command == 'configuration':
             try:
                 cfgids = get_configuration_ids(credentials, envid)
                 cfgid = cfgids[args.cfgid]
@@ -969,7 +969,7 @@ if __name__ == "__main__":
                 print " envid={1}; cfgid={2}; {0}".format(e, args.envid, args.cfgid)
                 sys.exit(1)
 
-        elif list_lower == 'collection':
+        elif command == 'collection':
             colids = get_collections_ids(credentials, envid)
             try:
                 colid = colids[args.colid]
@@ -986,7 +986,7 @@ if __name__ == "__main__":
                 print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
                 sys.exit(1)
 
-        elif list_lower == 'document':
+        elif command == 'document':
             colids = get_collections_ids(credentials, envid)
             try:
                 colid = colids[args.colid]
@@ -1032,13 +1032,13 @@ if __name__ == "__main__":
             print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.list)
             sys.exit(1)
 
-        create_lower = args.create.lower()
+        command = args.create.lower()
         if args.envid is not None:
             try:
                 envid = envids[args.envid]
-                if create_lower == 'environment':
+                if command == 'environment':
                     create_discovery_environment(cred=credentials, name=args.create, descr=args.description)
-                elif create_lower == 'collection':
+                elif command == 'collection':
                     cfgids = get_configuration_ids(credentials, envid)
                     cfgid = cfgids[args.cfgid]
                     result = create_collection(credentials=credentials, envid=envid, name=args.name, cfgid=cfgid, description=args.description, raw=args.raw)
@@ -1060,16 +1060,16 @@ if __name__ == "__main__":
             print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.list)
             sys.exit(1)
 
-        delete_lower = args.delete.lower()
+        command = args.delete.lower()
         if args.envid is not None:
             try:
                 envid = envids[args.envid]
-                if delete_lower == 'environment':
+                if command == 'environment':
                     delete_discovery_environment(cred=credential, envid=envid)
                     result = delete_discovery_environment(cred=credentials, envid=envid)
                     print result
                     sys.exit(0)
-                elif delete_lower == 'collection':
+                elif command == 'collection':
                     colids = get_collections_ids(credentials=credentials, envid=envid)
                     if colids:
                         colid = colids[args.colid]
@@ -1080,7 +1080,6 @@ if __name__ == "__main__":
                         print "No collections found?"
                         sys.exit(1)
             except IndexError:
-                print "Delete:"
                 print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={0}; colid={1}; cfgid={2}".format(args.envid, args.colid, args.cfgid)
                 sys.exit(1)
