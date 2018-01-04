@@ -68,8 +68,6 @@ def list_environments(credentials, raw=True):
 #         "read_only" : false
 #       } ]
 #     }
-    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-    # print(r.text)
     if r.status_code != requests.codes.ok:
         print "List Collections Failed: {0}".format(r.status_code)
         return None
@@ -113,8 +111,6 @@ def list_configurations(credentials, envid, raw=True):
     if args.verbose >= 1:
         print "GET: {}".format(r.url)
 
-    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-    # print(r.text)
 #     {
 #       "collections" : [ {
 #         "collection_id" : "5bbeb90b-08b6-4eb4-b5cf-82b7ed0aada1",
@@ -355,8 +351,7 @@ def list_environment(credentials, envid, raw=True):
 #         }
 #       }
 #     }
-#     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-#     print(r.text)
+
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
             print "List environment Failed: {0}".format(r.status_code)
@@ -405,8 +400,6 @@ def list_configuration(credentials, envid, cfgid, raw=True):
     if args.verbose >= 1:
         print "GET: {0}".format(r.url)
 
-#     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-#     print(r.text)
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
             print "List configuration Failed: {0}".format(r.status_code)
@@ -454,8 +447,6 @@ def list_collection(credentials, envid, colid, raw=True):
     if args.verbose >= 1:
         print "GET: {0}".format(r.url)
 
-#     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-#     print(r.text)
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
             print "List collection Failed: {0}".format(r.status_code)
@@ -504,8 +495,6 @@ def list_document(credentials, envid, colid, docid, raw=True):
     if args.verbose >= 1:
         print "GET: {0}".format(r.url)
 
-#     print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-#     print(r.text)
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
             print "List document Failed: {0}".format(r.status_code)
@@ -565,9 +554,9 @@ def get_environment_summary(cred, envid):
 
 
 #===============================================================================
-# create_discovery_environment
+# create_environment
 #===============================================================================
-def create_discovery_environment(cred, name, descr):
+def create_environment(cred, name, descr):
     """
      Create Discovery Environment (REST + post)
     :param cred: Watson Credentials (username, password, version)
@@ -588,8 +577,6 @@ def create_discovery_environment(cred, name, descr):
         print "POST: {0}".format(r.url)
         print "JSON: {0}".format(data)
 
-    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-    # print(r.text)
     if r.status_code == requests.codes.ok or r.status_code == requests.codes.created:
         return r.text
     else:
@@ -598,9 +585,9 @@ def create_discovery_environment(cred, name, descr):
 
 
 #===============================================================================
-# delete_discovery_environment
+# delete_environment
 #===============================================================================
-def delete_discovery_environment(cred, envid):
+def delete_environment(cred, envid):
     """
      Delete Discovery Environment (REST + post)
     :param cred: Watson Credentials (username, password, version)
@@ -777,7 +764,7 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
     # magic.from_file("../examples/LinkedIn_Ella_Salzmann.pdf", mime=True) >>> 'application/pdf'
     # magic.from_file("../examples/parameters.json", mime=True) >>>'text/plain'
     # magic.from_file("../examples/missing-file.txt", mime=True)
-    # IOError: [Errno 2] No such file or directory: '../examples/files.txt'
+    #   IOError: [Errno 2] No such file or directory: '../examples/missing-file.txt'
     mime_type = magic.from_file(file_name, mime=True)
     if mime_type == 'text/html':
         try:
@@ -792,9 +779,6 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
     if args.verbose >= 1:
         print "POST: {0}".format(r.url)
         print "FILE: {0}".format(file_name)
-
-    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-    # print(r.text)
 
     # 200 OK - Successful request
     # 202 Accepted - index progressing.
@@ -1039,7 +1023,7 @@ if __name__ == "__main__":
             try:
                 envid = envids[args.envid]
                 if command == 'environment':
-                    create_discovery_environment(cred=credentials, name=args.create, descr=args.description)
+                    create_environment(credentials=credentials, name=args.create, descr=args.description)
                 elif command == 'collection':
                     cfgids = get_configuration_ids(credentials, envid)
                     cfgid = cfgids[args.cfgid]
@@ -1067,8 +1051,7 @@ if __name__ == "__main__":
             try:
                 envid = envids[args.envid]
                 if command == 'environment':
-                    delete_discovery_environment(cred=credential, envid=envid)
-                    result = delete_discovery_environment(cred=credentials, envid=envid)
+                    result = delete_environment(credentials=credentials, envid=envid)
                     print result
                     sys.exit(0)
                 elif command == 'collection':
@@ -1093,7 +1076,6 @@ if __name__ == "__main__":
 
     else:
         print "Unknown command"
-        result = get_environment_ids(credentials)
         print parser.print_usage()
         sys.exit(1)
 
