@@ -251,10 +251,13 @@ def list_documents(credentials, envid, colid=None, raw=True):
     # GET /v1/environments/{environment_id}/collections/{collection_id}/documents
     # curl -u "{username}":"{password}"
     # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
+    # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/query?return=extracted_metadata&version=2017-11-07"
 
     api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
-    api += '/' + envid + '/collections/' + colid + '/documents'
+    # api += '/' + envid + '/collections/' + colid + '/documents'
+    api += '/' + envid + '/collections/' + colid + '/query'
     payload = {}
+    payload['return'] = 'extracted_metadata'
     payload['version'] = credentials['version']
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
@@ -269,6 +272,9 @@ def list_documents(credentials, envid, colid=None, raw=True):
     else:
         if raw:
             return r.text
+        else:
+            environment = json.loads(r.text)
+            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True)
 
     # return "list_collections({0},{1})".format(credentials,envid)
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
@@ -290,16 +296,84 @@ def get_document_ids(credentials, envid, colid):
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
 
+    if colid is None:
+        print "Invalid colid, '{0}'".format(colid)
+        sys.exit(1)
+
+    # {"matching_results":36,"results":[
+    #     { "id":"fcfeba641624af03290105b3d6a93f2b",
+    #       "result_metadata":{"score":1},
+    #       "extracted_metadata":{
+    #           "publicationdate":"2018-01-05",
+    #           "sha1":"31f50f9ab95ae4fddadfeeebaea1ddd2f6408f59",
+    #           "filename":"LilianeMaibachProfile.pdf",
+    #           "file_type":"html",
+    #           "title":"no title"
+    #         }
+    #     },
+    #     ...
+    #     {}
+    # ]}
     document_ids = []
     documents = list_documents(credentials=credentials, envid=envid, colid=colid)
     if documents is not None:
         document = json.loads(documents)
-        for c in document['documents']:
-            document_ids.append(c['document_id'])
+        for d in document['results']:
+            document_ids.append(d['id'])
 
     return document_ids
 
 
+def delete_document(credentials, envid, colid, docid, raw):
+    '''
+    Delete a document from a collection
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param colid: collection_id string
+    :param docid: document_id string
+    :param raw: True JSON output, YAML otherwise 
+    '''
+    if envid is None:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
+     
+    if colid is None:
+        print "Invalid colid, '{0}'".format(colid)
+        sys.exit(1)
+        
+    if docid is None:
+        print "Invalid docid, '{0}'".format(docid)
+        sys.exit(1)
+
+    # DELETE /v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}
+    # curl -X DELETE -u "{username}":"{password}"
+    #  "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}?version=2017-11-07"    
+
+    api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
+    api += '/' + envid + '/collections/' + colid + '/documents/' + docid
+    payload = {}
+    payload['version'] = credentials['version']
+
+    r = requests.delete(api, params=payload, auth=(credentials['username'], credentials['password']))
+    if args.verbose >= 1:
+        print "DELETE: {0}".format(r.url)
+
+    if r.status_code != requests.codes.ok:
+        if args.verbose >= 1:
+            print "Delete_document({0},{1},{2},{3})".format('****', envid, colid, docid)
+            print "Delete document Failed: {0} ".format(r.status_code)
+
+        return None
+    else:
+        if raw:
+            return r.text
+        else:
+            environment = json.loads(r.text)
+            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True)
+    
+    # print(r.text)
+    return "delete_documents({0},{1},{2},{3})".format(credentials, envid, colid, docid)
+    
 #===============================================================================
 # list_environment
 #===============================================================================
@@ -920,7 +994,6 @@ if __name__ == "__main__":
                 sys.exit(1)
 
             result = list_documents(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
-            print "Warning: this appears not too work?"
             if result is None:
                 title = "Documents (EnvID: {0}):".format(envid)
                 print title + os.linesep + ("=" * len(title)),
@@ -930,9 +1003,7 @@ if __name__ == "__main__":
             elif args.raw:
                 print result
             else:
-                # need to print documents
-                pass
-
+                print result
         elif command == 'environment':
             result = list_environment(credentials=credentials, envid=envid, raw=args.raw)
             title = "Environment: {0}".format(envid)
@@ -1064,6 +1135,24 @@ if __name__ == "__main__":
                     else:
                         print "No collections found?"
                         sys.exit(1)
+                elif command == 'document':
+                    colids = get_collections_ids(credentials=credentials, envid=envid)
+                    if colids:
+                        colid = colids[args.colid]
+                        docids = get_document_ids(credentials=credentials, envid=envid, colid=colid)
+                                                
+                        if docids:
+                            docid = docids[args.docid]
+                            result = delete_document(credentials=credentials, envid=envid, colid=colid, docid=docid, raw=args.raw)
+                            print result
+                            sys.exit(0)
+                        else:
+                            print "No documents found?"
+                            sys.exit(1)
+                    else:
+                        print "No collections found?"
+                        sys.exit(1)
+                            
             except IndexError:
                 print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={0}; colid={1}; cfgid={2}".format(args.envid, args.colid, args.cfgid)
