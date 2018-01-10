@@ -113,4 +113,5 @@ src/.watson.cfg
 # don't put credentials in github
 src/.gmail.watson.cfg
 src/.ymail.watson.cfg
+src/.mm.watson.cfg
 

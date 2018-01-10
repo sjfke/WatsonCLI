@@ -232,12 +232,13 @@ def get_collections_ids(credentials, envid):
 #===============================================================================
 # list_documents
 #===============================================================================
-def list_documents(credentials, envid, colid=None, raw=True):
+def list_documents(credentials, envid, colid=None, count=10, raw=True):
     """
      Return Watson Discovery Documents (broken does not work)
     :param credentials: Watson credentials
     :param envid: Watson environment_id string
     :param colid: Watson collection_id string
+    :param count: Number of documents to list
     :param raw: JSON output
     """
     if envid is None:
@@ -258,6 +259,7 @@ def list_documents(credentials, envid, colid=None, raw=True):
     api += '/' + envid + '/collections/' + colid + '/query'
     payload = {}
     payload['return'] = 'extracted_metadata'
+    payload['count'] = count
     payload['version'] = credentials['version']
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
@@ -285,12 +287,13 @@ def list_documents(credentials, envid, colid=None, raw=True):
 #===============================================================================
 # get_document_ids
 #===============================================================================
-def get_document_ids(credentials, envid, colid):
+def get_document_ids(credentials, envid, colid, count=10):
     """
      Return Watson Discovery Documents
     :param credentials: Watson credentials
     :param envid: Watson environment_id string
     :param colid: Watson collection_id string
+    :param count: Number of documents to list
     """
     if envid is None:
         print "Invalid envid, '{0}'".format(envid)
@@ -878,6 +881,7 @@ if __name__ == "__main__":
     parser.add_argument('-D', '--delete', help='(environment|configuration|collection|document)')
     parser.add_argument('-L', '--list', help='(environment[s]|configuration[s]|collection[s]|document[s])')
     parser.add_argument('-U', '--update', help='(environment|configuration|collection|document)')
+    parser.add_argument('-c', '--count', type=int, default=None, help='number of documents')
     parser.add_argument('-d', '--description', default=None, help='description for create command')
     parser.add_argument('-n', '--name', default=None, help='name for create command')
     parser.add_argument('--envid', type=int, default=None, help='environment index')
@@ -993,7 +997,7 @@ if __name__ == "__main__":
                 print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
                 sys.exit(1)
 
-            result = list_documents(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
+            result = list_documents(credentials=credentials, envid=envid, colid=colid, count=args.count, raw=args.raw)
             if result is None:
                 title = "Documents (EnvID: {0}):".format(envid)
                 print title + os.linesep + ("=" * len(title)),
@@ -1139,7 +1143,7 @@ if __name__ == "__main__":
                     colids = get_collections_ids(credentials=credentials, envid=envid)
                     if colids:
                         colid = colids[args.colid]
-                        docids = get_document_ids(credentials=credentials, envid=envid, colid=colid)
+                        docids = get_document_ids(credentials=credentials, envid=envid, colid=colid, count=args.count)
                                                 
                         if docids:
                             docid = docids[args.docid]
