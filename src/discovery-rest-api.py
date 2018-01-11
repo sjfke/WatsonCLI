@@ -339,18 +339,18 @@ def delete_document(credentials, envid, colid, docid, raw):
     if envid is None:
         print "Invalid envid, '{0}'".format(envid)
         sys.exit(1)
-     
+
     if colid is None:
         print "Invalid colid, '{0}'".format(colid)
         sys.exit(1)
-        
+
     if docid is None:
         print "Invalid docid, '{0}'".format(docid)
         sys.exit(1)
 
     # DELETE /v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}
     # curl -X DELETE -u "{username}":"{password}"
-    #  "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}?version=2017-11-07"    
+    #  "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}?version=2017-11-07"
 
     api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
     api += '/' + envid + '/collections/' + colid + '/documents/' + docid
@@ -373,13 +373,15 @@ def delete_document(credentials, envid, colid, docid, raw):
         else:
             environment = json.loads(r.text)
             return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True)
-    
+
     # print(r.text)
     return "delete_documents({0},{1},{2},{3})".format(credentials, envid, colid, docid)
-    
+
 #===============================================================================
 # list_environment
 #===============================================================================
+
+
 def list_environment(credentials, envid, raw=True):
     """
      Return Watson Discovery Environment Details
@@ -734,7 +736,7 @@ def create_collection(credentials, envid, name, cfgid, description=None, languag
     if r.status_code == requests.codes.ok or r.status_code == requests.codes.created:
         if args.verbose >= 1:
             print "{0}: Create Collection succeeded".format(r.status_code)
-            
+
         if raw:
             return r.text
         else:
@@ -795,8 +797,6 @@ def delete_collection(credentials, envid, colid, raw=True):
 #===============================================================================
 # upload_document
 #===============================================================================
-
-
 def upload_document(credentials, envid, colid, file_name, raw=True):
     '''
     Upload a document into a collection in the environment
@@ -869,6 +869,118 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
 
 
 #===============================================================================
+# query_document
+#===============================================================================
+def query_document(credentials, envid, colid=None, docid=None, query=None, raw=True):
+    """
+    Query a single document
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param colid: Watson collection_id string
+    :param docid: Watson document id string
+    :param query: JSON string query
+    :param count: Number of documents to list
+    :param raw: JSON output
+    """
+    if envid is None:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
+
+    if colid is None:
+        print "Missing collection_id; hint {0} -L configurations --envid {1}".format(sys.argv[0], envid)
+        sys.exit(1)
+
+    # GET /v1/environments/{environment_id}/collections/{collection_id}/documents
+    # curl -u "{username}":"{password}"
+    # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
+    # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/query?return=extracted_metadata&version=2017-11-07"
+
+    api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
+    api += '/' + envid + '/collections/' + colid + '/query'
+    payload = {}
+    payload['filter'] = '_id:"' + docid + '"'
+    payload['return'] = 'enriched_text.entities'
+    payload['version'] = credentials['version']
+
+    r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
+    if args.verbose >= 1:
+        print "GET: {0}".format(r.url)
+
+    if r.status_code != requests.codes.ok:
+        if args.verbose >= 1:
+            print "Query Document Failed: {0}".format(r.status_code)
+
+        return None
+    else:
+        if raw:
+            return r.text
+        else:
+            environment = json.loads(r.text)
+            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True)
+
+    # return "list_collections({0},{1})".format(credentials,envid)
+    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
+    # print(r.text)
+    return "query_document({0},{1},{2})".format(credentials, envid, colid)
+
+
+#===============================================================================
+# query_collection
+#===============================================================================
+def query_collection(credentials, envid, colid=None, query=None, count=10, raw=True):
+    """
+    Query a single document
+    :param credentials: Watson credentials
+    :param envid: Watson environment_id string
+    :param colid: Watson collection_id string
+    :param query: JSON string query
+    :param count: Number of documents to list
+    :param raw: JSON output
+    """
+    if envid is None:
+        print "Invalid envid, '{0}'".format(envid)
+        sys.exit(1)
+
+    if colid is None:
+        print "Missing collection_id; hint {0} -L configurations --envid {1}".format(sys.argv[0], envid)
+        sys.exit(1)
+
+    # GET /v1/environments/{environment_id}/collections/{collection_id}/documents
+    # curl -u "{username}":"{password}"
+    # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
+    # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/query?return=extracted_metadata&version=2017-11-07"
+
+    api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
+    api += '/' + envid + '/collections/' + colid + '/query'
+    payload = {}
+    payload['filter'] = 'enriched_text.entities.type::"Company"'
+    payload['return'] = 'enriched_text.entities'
+    payload['count'] = count
+    payload['version'] = credentials['version']
+
+    r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
+    if args.verbose >= 1:
+        print "GET: {0}".format(r.url)
+
+    if r.status_code != requests.codes.ok:
+        if args.verbose >= 1:
+            print "Query Collection Failed: {0}".format(r.status_code)
+
+        return None
+    else:
+        if raw:
+            return r.text
+        else:
+            environment = json.loads(r.text)
+            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True)
+
+    # return "list_collections({0},{1})".format(credentials,envid)
+    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
+    # print(r.text)
+    return "query_collection({0},{1},{2})".format(credentials, envid, colid)
+
+
+#===============================================================================
 # https://www.ibm.com/watson/developercloud/discovery/api/v1/
 # https://console.bluemix.net/docs/services/discovery/getting-started.html#getting-started-with-the-api
 # __main__
@@ -881,6 +993,7 @@ if __name__ == "__main__":
     parser.add_argument('-D', '--delete', help='(environment|configuration|collection|document)')
     parser.add_argument('-L', '--list', help='(environment[s]|configuration[s]|collection[s]|document[s])')
     parser.add_argument('-U', '--update', help='(environment|configuration|collection|document)')
+    parser.add_argument('-Q', '--query', help='(collection|document)')
     parser.add_argument('-c', '--count', type=int, default=None, help='number of documents')
     parser.add_argument('-d', '--description', default=None, help='description for create command')
     parser.add_argument('-n', '--name', default=None, help='name for create command')
@@ -903,6 +1016,7 @@ if __name__ == "__main__":
     delete_allowed = ['environment', 'configuration', 'collection', 'document']
     list_allowed = ['environments', 'configurations', 'collections', 'documents', 'environment', 'configuration', 'collection', 'document']
     delete_allowed = ['environment', 'configuration', 'collection', 'document']
+    query_allowed = ['collection', 'document']
 
     if args.list:
         if not (args.list.lower() in list_allowed):
@@ -1118,7 +1232,7 @@ if __name__ == "__main__":
 
     elif args.delete:
         if not (args.delete.lower() in delete_allowed):
-            print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.list)
+            print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.delete)
             sys.exit(1)
 
         command = args.delete.lower()
@@ -1144,7 +1258,7 @@ if __name__ == "__main__":
                     if colids:
                         colid = colids[args.colid]
                         docids = get_document_ids(credentials=credentials, envid=envid, colid=colid, count=args.count)
-                                                
+
                         if docids:
                             docid = docids[args.docid]
                             result = delete_document(credentials=credentials, envid=envid, colid=colid, docid=docid, raw=args.raw)
@@ -1156,13 +1270,62 @@ if __name__ == "__main__":
                     else:
                         print "No collections found?"
                         sys.exit(1)
-                            
+
             except IndexError:
                 print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={0}; colid={1}; cfgid={2}".format(args.envid, args.colid, args.cfgid)
                 sys.exit(1)
             except TypeError as e:
                 print "Delete:"
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1}; colid={2}; cfgid={3}; {0}".format(e, args.envid, args.colid, args.cfgid)
+                sys.exit(1)
+
+    elif args.query:
+        print args.query
+        if not (args.query.lower() in query_allowed):
+            print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.query)
+            sys.exit(1)
+
+        command = args.query.lower()
+        if args.envid is not None:
+            try:
+                envid = envids[args.envid]
+                if command == 'collection':
+                    colids = get_collections_ids(credentials=credentials, envid=envid)
+                    if colids:
+                        colid = colids[args.colid]
+                        result = query_collection(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
+                        print result
+                        sys.exit(0)
+                    else:
+                        print "No collections found?"
+                        sys.exit(1)
+                elif command == 'document':
+                    colids = get_collections_ids(credentials=credentials, envid=envid)
+                    if colids:
+                        colid = colids[args.colid]
+                        docids = get_document_ids(credentials=credentials, envid=envid, colid=colid, count=args.count)
+
+                        if docids:
+                            docid = docids[args.docid]
+                            result = query_document(credentials=credentials, envid=envid, colid=colid, docid=docid, raw=args.raw)
+                            print result
+                            sys.exit(0)
+                        else:
+                            print "No documents found?"
+                            sys.exit(1)
+                    else:
+                        print "No collections found?"
+                        sys.exit(1)
+
+            except IndexError:
+                print "Query:"
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0}; colid={1}; cfgid={2}".format(args.envid, args.colid, args.cfgid)
+                sys.exit(1)
+            except TypeError as e:
+                print "Query:"
                 print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={1}; colid={2}; cfgid={3}; {0}".format(e, args.envid, args.colid, args.cfgid)
                 sys.exit(1)
