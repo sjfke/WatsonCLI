@@ -1,6 +1,8 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 import argparse
+import codecs
 import os
 import re
 import sys
@@ -9,6 +11,8 @@ import yaml
 import requests
 from _bsddb import api
 
+UTF8Writer = codecs.getwriter('utf8')
+sys.stdout = UTF8Writer(sys.stdout)
 
 #===============================================================================
 # get_watson_credentials
@@ -1282,7 +1286,6 @@ if __name__ == "__main__":
                 sys.exit(1)
 
     elif args.query:
-        print args.query
         if not (args.query.lower() in query_allowed):
             print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.query)
             sys.exit(1)
