@@ -11,6 +11,7 @@ import yaml
 import requests
 from _bsddb import api
 
+# http://pythonhosted.org/kitchen/unicode-frustrations.html
 UTF8Writer = codecs.getwriter('utf8')
 sys.stdout = UTF8Writer(sys.stdout)
 
@@ -649,7 +650,6 @@ def create_environment(cred, name, descr):
     import json
     import requests
 
-    # TODO: Figure out with this fails; Create Environment Failed: 201
     api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
     api += '?version=' + cred['version']
 
@@ -975,8 +975,8 @@ def query_collection(credentials, envid, colid=None, query=None, count=10, raw=T
         if raw:
             return r.text
         else:
-            environment = json.loads(r.text)
-            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True)
+            #environment = json.loads(r.text)
+            return yaml.safe_dump(json.loads(r.text), encoding='utf-8', allow_unicode=True)
 
     # return "list_collections({0},{1})".format(credentials,envid)
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
@@ -1298,7 +1298,7 @@ if __name__ == "__main__":
                     colids = get_collections_ids(credentials=credentials, envid=envid)
                     if colids:
                         colid = colids[args.colid]
-                        result = query_collection(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
+                        result = query_collection(credentials=credentials, envid=envid, colid=colid, count=args.count, raw=args.raw)
                         print result
                         sys.exit(0)
                     else:
