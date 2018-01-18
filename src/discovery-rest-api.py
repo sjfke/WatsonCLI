@@ -18,6 +18,8 @@ sys.stdout = UTF8Writer(sys.stdout)
 #===============================================================================
 # get_watson_credentials
 #===============================================================================
+
+
 def get_watson_credentials(filename):
     '''
     Return a List of Watson Discovery Environments
@@ -875,7 +877,7 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
 #===============================================================================
 # query_document
 #===============================================================================
-def query_document(credentials, envid, colid=None, docid=None, query=None, raw=True):
+def query_document(credentials, envid, colid=None, docid=None, query=None, filtered=True, raw=True):
     """
     Query a single document
     :param credentials: Watson credentials
@@ -883,6 +885,7 @@ def query_document(credentials, envid, colid=None, docid=None, query=None, raw=T
     :param colid: Watson collection_id string
     :param docid: Watson document id string
     :param query: JSON string query
+    :param filtered: return only enriched_text.(concepts,keywords,entities,categories)
     :param count: Number of documents to list
     :param raw: JSON output
     """
@@ -903,7 +906,9 @@ def query_document(credentials, envid, colid=None, docid=None, query=None, raw=T
     api += '/' + envid + '/collections/' + colid + '/query'
     payload = {}
     payload['filter'] = '_id:"' + docid + '"'
-    payload['return'] = 'enriched_text.entities'
+    if filtered:
+        payload['return'] = 'enriched_text.concepts,enriched_text.keywords,enriched_text.entities,enriched_text.categories'
+        
     payload['version'] = credentials['version']
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
@@ -919,8 +924,7 @@ def query_document(credentials, envid, colid=None, docid=None, query=None, raw=T
         if raw:
             return r.text
         else:
-            environment = json.loads(r.text)
-            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(json.loads(r.text), encoding='utf-8', allow_unicode=True)
 
     # return "list_collections({0},{1})".format(credentials,envid)
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))

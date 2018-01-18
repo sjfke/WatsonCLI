@@ -29,12 +29,16 @@ def extract_data(src):
         data = json.loads(f.read())
         count = 0
         for results in data['results']:
-            excel_row = {'Person': [], 'JobTitle': [], 'Company': []}
+            # excel_row = {'Person': [], 'JobTitle': [], 'Company': []}
+            excel_row = {}
             for entity in results['enriched_text']['entities']:
                 # print "Type: {0}".format(entity['type'])
-                if entity['type'] in ["JobTitle", "Company", "Person"]:
-                    # print '[' + str(count) + ']' + entity['type'] + ": " + entity['text']
+                # print '[' + str(count) + ']' + entity['type'] + ": " + entity['text']
+                if entity['type'] in excel_row:
                     excel_row[entity['type']].append(entity['text'])
+                else:   
+                    excel_row[entity['type']] = [entity['text']]
+                
             count += 1
             extracted_data.append(excel_row)
 
@@ -60,50 +64,44 @@ def write_excel(sheetname, dst, data):
 
     # https://buxty.com/b/2011/10/widths-heights-with-xlwt-python/
     char_width = 256
-    sheet.col(1).width = char_width * 30
-    sheet.col(2).width = char_width * 50
-    sheet.col(3).width = char_width * 40
+    col_width = char_width * 25
 
     row = 0
-    for index, d in enumerate(data):
+    col = 1
+    column_names = []
+    
+    for index, values in enumerate(data):
+        for value in values:
+            if not value in column_names:
+                column_names.append(value)
+   
+    for i in range(0, len(column_names)):             
+        sheet.col(i).width = col_width
+                
+    for index, values in enumerate(data):
+        
         minrow = row
         maxrow = row
         sheet.write(minrow, 0, "Person" + str(index))
-        if 'Person' in d:
-            r = minrow
-            for p in d['Person']:
-                sheet.write(r, 1, p)
-                r += 1
-                if r > maxrow:
-                    maxrow = r
-        else:
-            sheet.write(row, 1, '')
-
-        if 'JobTitle' in d:
-            r = minrow
-            for jt in d['JobTitle']:
-                sheet.write(r, 2, jt)
-                r += 1
-                if r > maxrow:
-                    maxrow = r
-        else:
-            sheet.write(row, 2, '')
-
-        if 'Company' in d:
-            r = minrow
-            for c in d['Company']:
-                sheet.write(r, 3, c)
-                r += 1
-                if r > maxrow:
-                    maxrow = r
-        else:
-            sheet.write(row, 3, '')
-
+        
+        for column_name in column_names:
+            col = column_names.index(column_name) + 1
+            sheet.write(minrow, col, column_name)
+            r = minrow + 1
+            if column_name in values:
+                for v in values[column_name]:
+                    sheet.write(r, col, v)
+                    r += 1
+                    if r > maxrow:
+                        maxrow = r
+            else:
+                sheet.write(r, col, '')             
+                
         row = maxrow + 1
+        col = 1
 
     # return json.dumps(data)
     wb.save(dst)
-    return None
 
 
 #===============================================================================
@@ -122,8 +120,9 @@ if __name__ == "__main__":
     sheetname = src.replace('.json', '')
     dst = args.file.lower().replace('json', 'xls')
     data = extract_data(src=src)
+    # print data
 
     result = write_excel(sheetname=sheetname, data=data, dst=dst)
-    print result
+    # print result
 
     sys.exit(0)
