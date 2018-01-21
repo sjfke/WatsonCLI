@@ -76,7 +76,8 @@ def list_environments(credentials, raw=True):
 #       } ]
 #     }
     if r.status_code != requests.codes.ok:
-        print "List Collections Failed: {0}".format(r.status_code)
+        if args.verbose >= 1:
+            print "List Collections Failed: {0}".format(r.status_code)
         return None
     else:
         if raw:
@@ -606,10 +607,13 @@ def get_environment_ids(credentials):
     """
 
     import json
-    envs = json.loads(list_environments(credentials))
-    results = []
-    for env in envs['environments']:
-        results.append(env['environment_id'])
+    environment_list = list_environments(credentials)
+    results = None
+    if environment_list:
+        results = []
+        envs = json.loads(environment_list)        
+        for env in envs['environments']:
+            results.append(env['environment_id'])
 
     return results
 
