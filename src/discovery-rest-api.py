@@ -13,7 +13,6 @@ from _bsddb import api
 
 # http://pythonhosted.org/kitchen/unicode-frustrations.html
 UTF8Writer = codecs.getwriter('utf8')
-sys.stdout = UTF8Writer(sys.stdout)
 
 #===============================================================================
 # get_watson_credentials
@@ -966,7 +965,8 @@ def query_collection(credentials, envid, colid=None, query=None, count=10, raw=T
     api += '/' + envid + '/collections/' + colid + '/query'
     payload = {}
     payload['filter'] = 'enriched_text.entities.type::"Company"'
-    payload['return'] = 'enriched_text.entities'
+    # payload['return'] = 'enriched_text.entities'
+    payload['return'] = 'enriched_text.concepts,enriched_text.keywords,enriched_text.entities,enriched_text.categories'
     payload['count'] = count
     payload['version'] = credentials['version']
 
@@ -1124,16 +1124,23 @@ if __name__ == "__main__":
                 sys.exit(1)
 
             result = list_documents(credentials=credentials, envid=envid, colid=colid, count=args.count, raw=args.raw)
+            title = "Documents (EnvID: {0}):".format(envid)
+            print title + os.linesep + ("=" * len(title))
             if result is None:
-                title = "Documents (EnvID: {0}):".format(envid)
-                print title + os.linesep + ("=" * len(title)),
                 print "{1}Collection: '{0}'".format(colid, args.separator),
                 print "{0}No documents found".format(args.separator),
                 print
             elif args.raw:
                 print result
             else:
-                print result
+                if isinstance(result, str):
+                    print result
+                elif isinstance(result, unicode):
+                    sys.stdout = UTF8Writer(sys.stdout)
+                    print result
+                else:
+                    print result
+                    
         elif command == 'environment':
             result = list_environment(credentials=credentials, envid=envid, raw=args.raw)
             title = "Environment: {0}".format(envid)

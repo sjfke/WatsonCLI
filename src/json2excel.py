@@ -22,26 +22,49 @@ def extract_data(src):
     :param src: source filename
     '''
     # print "SRC: {0}".format(src)
-    # print "DST: {0}".format(dst)
 
-    extracted_data = []
+    extracted_data = {'entities':[], 'concepts':[], 'keywords':[], 'categories':[]}
     with open(src) as f:
         data = json.loads(f.read())
         count = 0
         for results in data['results']:
-            # excel_row = {'Person': [], 'JobTitle': [], 'Company': []}
-            excel_row = {}
-            for entity in results['enriched_text']['entities']:
-                # print "Type: {0}".format(entity['type'])
-                # print '[' + str(count) + ']' + entity['type'] + ": " + entity['text']
-                if entity['type'] in excel_row:
-                    excel_row[entity['type']].append(entity['text'])
-                else:   
-                    excel_row[entity['type']] = [entity['text']]
+            for enrichment_type in results['enriched_text']:
                 
-            count += 1
-            extracted_data.append(excel_row)
+                if enrichment_type == 'entities':
+                    dict = {}
+                    for enrichment in results['enriched_text']['entities']:
+                        if enrichment['type'] in dict:
+                            dict[enrichment['type']].append(enrichment['text'])
+                        else:
+                            dict[enrichment['type']] = [enrichment['text']]
+                     
+                    if dict:       
+                        extracted_data['entities'].append(dict)
+                    
+                elif enrichment_type == 'concepts':
+                    dict = {}
+                    for enrichment in results['enriched_text']['concepts']:
+                        dict[enrichment['text']] = enrichment['relevance']
+                        
+                    if dict:        
+                        extracted_data['concepts'].append(dict)
 
+                elif enrichment_type == 'keywords':
+                    dict = {}
+                    for enrichment in results['enriched_text']['keywords']:
+                        dict[enrichment['text']] = enrichment['relevance']
+                            
+                    if dict:
+                        extracted_data['keywords'].append(dict)
+
+                elif enrichment_type == 'categories':
+                    dict = {}
+                    for enrichment in results['enriched_text']['categories']:
+                        dict[enrichment['label']] = enrichment['score']
+                            
+                    if dict:
+                        extracted_data['categories'].append(dict)
+                
         return extracted_data
 
     return None
@@ -50,17 +73,16 @@ def extract_data(src):
 #===============================================================================
 # write_excel
 #===============================================================================
-def write_excel(sheetname, dst, data):
+def write_excel(dst, data):
     '''
     Write extracted data to Excel
-    :param sheetname: tab description
     :param dst: destination filename
     :param data: data object
     '''
     import xlwt
 
     wb = xlwt.Workbook()
-    sheet = wb.add_sheet(sheetname)
+    sheet = wb.add_sheet('Entities')
 
     # https://buxty.com/b/2011/10/widths-heights-with-xlwt-python/
     char_width = 256
@@ -70,7 +92,7 @@ def write_excel(sheetname, dst, data):
     col = 1
     column_names = []
     
-    for index, values in enumerate(data):
+    for index, values in enumerate(data['entities']):
         for value in values:
             if not value in column_names:
                 column_names.append(value)
@@ -78,7 +100,7 @@ def write_excel(sheetname, dst, data):
     for i in range(0, len(column_names)):             
         sheet.col(i).width = col_width
                 
-    for index, values in enumerate(data):
+    for index, values in enumerate(data['entities']):
         
         minrow = row
         maxrow = row
@@ -100,6 +122,48 @@ def write_excel(sheetname, dst, data):
         row = maxrow + 1
         col = 1
 
+    sheet = wb.add_sheet('Concepts')
+    for i in range(0, 2):             
+        sheet.col(i).width = col_width
+    
+    sheet.write(0, 0, "Text")
+    sheet.write(0, 1, "Relevance")
+    row = 1
+    col = 0            
+    for index, values in enumerate(data['concepts']):
+        for key in values:
+            sheet.write(row, 0, key)
+            sheet.write(row, 1, values[key])
+            row += 1
+    
+    sheet = wb.add_sheet('Keywords')
+    for i in range(0, 2):             
+        sheet.col(i).width = col_width
+    
+    sheet.write(0, 0, "Text")
+    sheet.write(0, 1, "Relevance")
+    row = 1
+    col = 0            
+    for index, values in enumerate(data['keywords']):
+        for key in values:
+            sheet.write(row, 0, key)
+            sheet.write(row, 1, values[key])
+            row += 1
+    
+    sheet = wb.add_sheet('Categories')
+    for i in range(0, 2):             
+        sheet.col(i).width = col_width
+    
+    sheet.write(0, 0, "Label")
+    sheet.write(0, 1, "Score")
+    row = 1
+    col = 0            
+    for index, values in enumerate(data['categories']):
+        for key in values:
+            sheet.write(row, 0, key)
+            sheet.write(row, 1, values[key])
+            row += 1
+    
     # return json.dumps(data)
     wb.save(dst)
 
@@ -117,12 +181,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     src = args.file.lower()
-    sheetname = src.replace('.json', '')
     dst = args.file.lower().replace('json', 'xls')
     data = extract_data(src=src)
     # print data
+    # sys.exit(0)
 
-    result = write_excel(sheetname=sheetname, data=data, dst=dst)
+    result = write_excel(data=data, dst=dst)
     # print result
 
     sys.exit(0)
