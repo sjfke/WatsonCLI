@@ -17,8 +17,6 @@ UTF8Writer = codecs.getwriter('utf8')
 #===============================================================================
 # get_watson_credentials
 #===============================================================================
-
-
 def get_watson_credentials(filename):
     '''
     Return a List of Watson Discovery Environments
@@ -39,6 +37,25 @@ def get_watson_credentials(filename):
     result['version'] = config.get('discovery', 'version')
 
     return result
+
+
+#===============================================================================
+# unicode_safe_print
+#===============================================================================
+def unicode_safe_print(string):
+    '''
+    Safely print a string which may be UTF-8 or ASCII
+    :param string:
+    '''
+    # http://pythonhosted.org/kitchen/unicode-frustrations.html
+    # https://stackoverflow.com/questions/21129020/how-to-fix-unicodedecodeerror-ascii-codec-cant-decode-byte
+    if isinstance(string, str):
+        print string
+    elif isinstance(string, unicode):
+        sys.stdout = UTF8Writer(sys.stdout)
+        print string
+    else:
+        print string
 
 
 #===============================================================================
@@ -1060,7 +1077,7 @@ if __name__ == "__main__":
                 print "No Environments?"
                 sys.exit(1)
             elif args.raw:
-                print result
+                unicode_safe_print(string=result)
             else:
                 title = "Environments:"
                 print title + os.linesep + ("=" * len(title))
@@ -1077,7 +1094,7 @@ if __name__ == "__main__":
             if result is None:
                 print "No configurations for, '{0}'".format(envid)
             elif args.raw:
-                print result
+                unicode_safe_print(string=result)
             else:
                 title = "Configurations (EnvID: {0}):".format(envid)
                 print title + os.linesep + ("=" * len(title))
@@ -1094,7 +1111,7 @@ if __name__ == "__main__":
             if result is None:
                 print "No collections for, '{0}'".format(envid)
             elif args.raw:
-                print result
+                unicode_safe_print(string=result)
             else:
                 title = "Collections (EnvID: {0}):".format(envid)
                 print title + os.linesep + ("=" * len(title))
@@ -1131,21 +1148,15 @@ if __name__ == "__main__":
                 print "{0}No documents found".format(args.separator),
                 print
             elif args.raw:
-                print result
+                unicode_safe_print(string=result)
             else:
-                if isinstance(result, str):
-                    print result
-                elif isinstance(result, unicode):
-                    sys.stdout = UTF8Writer(sys.stdout)
-                    print result
-                else:
-                    print result
+                unicode_safe_print(string=result)
                     
         elif command == 'environment':
             result = list_environment(credentials=credentials, envid=envid, raw=args.raw)
             title = "Environment: {0}".format(envid)
             print title + os.linesep + ("=" * len(title))
-            print result
+            unicode_safe_print(string=result)
         elif command == 'configuration':
             try:
                 cfgids = get_configuration_ids(credentials, envid)
@@ -1153,7 +1164,7 @@ if __name__ == "__main__":
                 result = list_configuration(credentials=credentials, envid=envid, cfgid=cfgid, raw=args.raw)
                 title = "Configuration: {0}".format(cfgid)
                 print title + os.linesep + ("=" * len(title))
-                print result
+                unicode_safe_print(string=result)
             except IndexError:
                 print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={0}; cfgid={1}".format(args.envid, args.cfgid)
@@ -1170,7 +1181,7 @@ if __name__ == "__main__":
                 result = list_collection(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
                 title = "Collection: {0}".format(colid)
                 print title + os.linesep + ("=" * len(title))
-                print result
+                unicode_safe_print(string=result)
             except IndexError:
                 print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={0}; colid={1}".format(args.envid, args.colid)
@@ -1189,7 +1200,7 @@ if __name__ == "__main__":
                 result = list_document(credentials=credentials, envid=envid, colid=colid, docid=docid, raw=args.raw)
                 title = "Document: {0}".format(docid)
                 print title + os.linesep + ("=" * len(title))
-                print result
+                unicode_safe_print(string=result)
             except IndexError:
                 print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={0}; colid={1}; docid={2}".format(args.envid, args.colid, args.docid)
@@ -1211,7 +1222,7 @@ if __name__ == "__main__":
             result = upload_document(credentials=credentials, envid=envid, colid=colid, file_name=args.add, raw=args.raw)
             title = "Add Document: '{0}' (ColID {1})".format(args.add, colid)
             print title + os.linesep + ("=" * len(title))
-            print result
+            unicode_safe_print(string=result)
         except IndexError:
             print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
             print " envid={0}; colid={1}".format(args.envid, args.colid)
@@ -1236,7 +1247,7 @@ if __name__ == "__main__":
                     cfgids = get_configuration_ids(credentials, envid)
                     cfgid = cfgids[args.cfgid]
                     result = create_collection(credentials=credentials, envid=envid, name=args.name, cfgid=cfgid, description=args.description, raw=args.raw)
-                    print result
+                    unicode_safe_print(string=result)
             except IndexError:
                 print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={0}; cfgid={1}".format(args.envid, args.cfgid)
@@ -1260,14 +1271,14 @@ if __name__ == "__main__":
                 envid = envids[args.envid]
                 if command == 'environment':
                     result = delete_environment(credentials=credentials, envid=envid)
-                    print result
+                    unicode_safe_print(string=result)
                     sys.exit(0)
                 elif command == 'collection':
                     colids = get_collections_ids(credentials=credentials, envid=envid)
                     if colids:
                         colid = colids[args.colid]
                         result = delete_collection(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
-                        print result
+                        unicode_safe_print(string=result)
                         sys.exit(0)
                     else:
                         print "No collections found?"
@@ -1281,7 +1292,7 @@ if __name__ == "__main__":
                         if docids:
                             docid = docids[args.docid]
                             result = delete_document(credentials=credentials, envid=envid, colid=colid, docid=docid, raw=args.raw)
-                            print result
+                            unicode_safe_print(string=result)
                             sys.exit(0)
                         else:
                             print "No documents found?"
@@ -1314,7 +1325,7 @@ if __name__ == "__main__":
                     if colids:
                         colid = colids[args.colid]
                         result = query_collection(credentials=credentials, envid=envid, colid=colid, count=args.count, raw=args.raw)
-                        print result
+                        unicode_safe_print(string=result)
                         sys.exit(0)
                     else:
                         print "No collections found?"
@@ -1328,7 +1339,7 @@ if __name__ == "__main__":
                         if docids:
                             docid = docids[args.docid]
                             result = query_document(credentials=credentials, envid=envid, colid=colid, docid=docid, raw=args.raw)
-                            print result
+                            unicode_safe_print(string=result)
                             sys.exit(0)
                         else:
                             print "No documents found?"
