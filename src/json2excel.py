@@ -23,37 +23,37 @@ def extract_data(src):
     '''
     # print "SRC: {0}".format(src)
 
-    extracted_data = {'entities':[], 'concepts':[], 'keywords':[], 'categories':[]}
+    extracted_data = {'entities': [], 'concepts': [], 'keywords': [], 'categories': []}
     with open(src) as f:
         data = json.loads(f.read())
         count = 0
         for results in data['results']:
             for enrichment_type in results['enriched_text']:
-                
+
                 if enrichment_type == 'entities':
                     dict = {}
                     for enrichment in results['enriched_text']['entities']:
                         if enrichment['type'] in dict:
-                            dict[enrichment['type']].append(enrichment['text'])
+                            dict[enrichment['type']].append((enrichment['text'], enrichment['relevance']))
                         else:
-                            dict[enrichment['type']] = [enrichment['text']]
-                     
-                    if dict:       
+                            dict[enrichment['type']] = [(enrichment['text'], enrichment['relevance'])]
+
+                    if dict:
                         extracted_data['entities'].append(dict)
-                    
+
                 elif enrichment_type == 'concepts':
                     dict = {}
                     for enrichment in results['enriched_text']['concepts']:
                         dict[enrichment['text']] = enrichment['relevance']
-                        
-                    if dict:        
+
+                    if dict:
                         extracted_data['concepts'].append(dict)
 
                 elif enrichment_type == 'keywords':
                     dict = {}
                     for enrichment in results['enriched_text']['keywords']:
                         dict[enrichment['text']] = enrichment['relevance']
-                            
+
                     if dict:
                         extracted_data['keywords'].append(dict)
 
@@ -61,10 +61,10 @@ def extract_data(src):
                     dict = {}
                     for enrichment in results['enriched_text']['categories']:
                         dict[enrichment['label']] = enrichment['score']
-                            
+
                     if dict:
                         extracted_data['categories'].append(dict)
-                
+
         return extracted_data
 
     return None
@@ -91,79 +91,80 @@ def write_excel(dst, data):
     row = 0
     col = 1
     column_names = []
-    
+
     for index, values in enumerate(data['entities']):
         for value in values:
             if not value in column_names:
                 column_names.append(value)
-   
-    for i in range(0, len(column_names)):             
+
+    for i in range(0, len(column_names)):
         sheet.col(i).width = col_width
-                
+
     for index, values in enumerate(data['entities']):
-        
+
         minrow = row
         maxrow = row
         sheet.write(minrow, 0, "Person" + str(index))
-        
+
+        col = 1
         for column_name in column_names:
-            col = column_names.index(column_name) + 1
             sheet.write(minrow, col, column_name)
+            sheet.write(minrow, col + 1, 'Relevance')
             r = minrow + 1
             if column_name in values:
                 for v in values[column_name]:
-                    sheet.write(r, col, v)
+                    sheet.write(r, col, v[0])
+                    sheet.write(r, col + 1, v[1])
                     r += 1
                     if r > maxrow:
                         maxrow = r
-            else:
-                sheet.write(r, col, '')             
-                
+            col += 2
+
         row = maxrow + 1
         col = 1
 
     sheet = wb.add_sheet('Concepts')
-    for i in range(0, 2):             
+    for i in range(0, 2):
         sheet.col(i).width = col_width
-    
+
     sheet.write(0, 0, "Text")
     sheet.write(0, 1, "Relevance")
     row = 1
-    col = 0            
+    col = 0
     for index, values in enumerate(data['concepts']):
         for key in values:
             sheet.write(row, 0, key)
             sheet.write(row, 1, values[key])
             row += 1
-    
+
     sheet = wb.add_sheet('Keywords')
-    for i in range(0, 2):             
+    for i in range(0, 2):
         sheet.col(i).width = col_width
-    
+
     sheet.write(0, 0, "Text")
     sheet.write(0, 1, "Relevance")
     row = 1
-    col = 0            
+    col = 0
     for index, values in enumerate(data['keywords']):
         for key in values:
             sheet.write(row, 0, key)
             sheet.write(row, 1, values[key])
             row += 1
-    
+
     sheet = wb.add_sheet('Categories')
-    for i in range(0, 2):             
+    for i in range(0, 2):
         sheet.col(i).width = col_width
-    
+
     sheet.write(0, 0, "Label")
     sheet.write(0, 1, "Score")
     row = 1
-    col = 0            
+    col = 0
     for index, values in enumerate(data['categories']):
         for key in values:
             sheet.write(row, 0, key)
             sheet.write(row, 1, values[key])
             row += 1
-    
+
     # return json.dumps(data)
     wb.save(dst)
 
