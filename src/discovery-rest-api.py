@@ -17,6 +17,8 @@ UTF8Writer = codecs.getwriter('utf8')
 #===============================================================================
 # get_watson_credentials
 #===============================================================================
+
+
 def get_watson_credentials(filename):
     '''
     Return a List of Watson Discovery Environments
@@ -288,7 +290,7 @@ def list_documents(credentials, envid, colid=None, count=10, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print "GET: {0}".format(r.url)
+        print "list_documents: GET: {0}".format(r.url)
 
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
@@ -342,7 +344,7 @@ def get_document_ids(credentials, envid, colid, count=10):
     #     {}
     # ]}
     document_ids = []
-    documents = list_documents(credentials=credentials, envid=envid, colid=colid)
+    documents = list_documents(credentials=credentials, envid=envid, colid=colid, count=count)
     if documents is not None:
         document = json.loads(documents)
         for d in document['results']:
@@ -358,7 +360,7 @@ def delete_document(credentials, envid, colid, docid, raw):
     :param envid: Watson environment_id string
     :param colid: collection_id string
     :param docid: document_id string
-    :param raw: True JSON output, YAML otherwise 
+    :param raw: True JSON output, YAML otherwise
     '''
     if envid is None:
         print "Invalid envid, '{0}'".format(envid)
@@ -411,7 +413,7 @@ def list_environment(credentials, envid, raw=True):
      Return Watson Discovery Environment Details
     :param credentials: Watson credentials
     :param envid: Watson environment_id string
-    :param raw: True JSON output, YAML otherwise 
+    :param raw: True JSON output, YAML otherwise
     """
 
     if envid is None:
@@ -627,7 +629,7 @@ def get_environment_ids(credentials):
     results = None
     if environment_list:
         results = []
-        envs = json.loads(environment_list)        
+        envs = json.loads(environment_list)
         for env in envs['environments']:
             results.append(env['environment_id'])
 
@@ -928,7 +930,7 @@ def query_document(credentials, envid, colid=None, docid=None, query=None, filte
     payload['filter'] = '_id:"' + docid + '"'
     if filtered:
         payload['return'] = 'enriched_text.concepts,enriched_text.keywords,enriched_text.entities,enriched_text.categories'
-        
+
     payload['version'] = credentials['version']
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
@@ -1132,11 +1134,11 @@ if __name__ == "__main__":
                 colids = get_collections_ids(credentials, envid)
                 colid = colids[args.colid]
             except IndexError:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print "List Documents: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={0}; colid={1}".format(args.envid, args.colid)
                 sys.exit(1)
             except TypeError as e:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print "List Documents: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
                 sys.exit(1)
 
@@ -1151,7 +1153,7 @@ if __name__ == "__main__":
                 unicode_safe_print(string=result)
             else:
                 unicode_safe_print(string=result)
-                    
+
         elif command == 'environment':
             result = list_environment(credentials=credentials, envid=envid, raw=args.raw)
             title = "Environment: {0}".format(envid)
@@ -1166,11 +1168,11 @@ if __name__ == "__main__":
                 print title + os.linesep + ("=" * len(title))
                 unicode_safe_print(string=result)
             except IndexError:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print "List Configuration: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={0}; cfgid={1}".format(args.envid, args.cfgid)
                 sys.exit(1)
             except TypeError as e:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print "List Configuration: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={1}; cfgid={2}; {0}".format(e, args.envid, args.cfgid)
                 sys.exit(1)
 
@@ -1183,11 +1185,11 @@ if __name__ == "__main__":
                 print title + os.linesep + ("=" * len(title))
                 unicode_safe_print(string=result)
             except IndexError:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print "List Collection: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={0}; colid={1}".format(args.envid, args.colid)
                 sys.exit(1)
             except TypeError as e:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print "List Collection: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
                 print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
                 sys.exit(1)
 
@@ -1195,19 +1197,19 @@ if __name__ == "__main__":
             colids = get_collections_ids(credentials, envid)
             try:
                 colid = colids[args.colid]
-                docids = get_document_ids(credentials=credentials, envid=envid, colid=colid)
+                docids = get_document_ids(credentials=credentials, envid=envid, colid=colid, count=args.count)
                 docid = docids[args.docid]
                 result = list_document(credentials=credentials, envid=envid, colid=colid, docid=docid, raw=args.raw)
                 title = "Document: {0}".format(docid)
                 print title + os.linesep + ("=" * len(title))
                 unicode_safe_print(string=result)
             except IndexError:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={0}; colid={1}; docid={2}".format(args.envid, args.colid, args.docid)
+                print "List Document: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0}; colid={1}; docid={2}; count={3}".format(args.envid, args.colid, args.docid, args.count)
                 sys.exit(1)
             except TypeError as e:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={1}; colid={2}; docid={3}; {0}".format(e, args.envid, args.colid, args.docid)
+                print "List Document: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1}; colid={2}; docid={3} count={4}; {0}".format(e, args.envid, args.colid, args.docid, args.count)
                 sys.exit(1)
 
         else:
