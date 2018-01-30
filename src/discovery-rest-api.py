@@ -668,6 +668,42 @@ def get_environment_ids(credentials):
 
 
 #===============================================================================
+# get_valid_envid
+#===============================================================================
+def get_valid_envid(envid, envids, strict=False):
+    '''
+    Return a valid environment_id string
+    :param envid: index
+    :param envids: list of valid enviroment_ids
+    :param strict: exit or return None if no match
+    '''
+    if envid is not None:
+        try:
+            return envids[envid]
+        except IndexError:
+            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+            print " envid={0} (>= {2}); envids={1}".format(envid, envids, len(envids))
+            if strict:
+                sys.exit(1)
+            else:
+                return None
+        except TypeError as e:
+            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+            print " envid={1} (>= {3}); {0}; envids={2}".format(e, envid, envids, len(envids))
+            if strict:
+                sys.exit(1)
+            else:
+                return None
+    else:
+        print "Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0])
+        print " envid={0} (>= {2}); envids={1}".format(envid, envids, len(envids))
+        if strict:
+            sys.exit(1)
+        else:
+            return None
+
+
+#===============================================================================
 # get_environment_summary
 #===============================================================================
 def get_environment_summary(cred, envid):
@@ -1135,22 +1171,8 @@ if __name__ == "__main__":
 
         command = args.list.lower()
 
-        if args.envid is not None:
-            try:
-                envid = envids[args.envid]
-            except IndexError:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={0}".format(args.envid)
-                sys.exit(1)
-            except TypeError as e:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={1}; {0}".format(e, args.envid)
-                sys.exit(1)
-        elif command == 'environments':
-            pass
-        else:
-            print "Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0])
-            sys.exit(1)
+        if command != 'environments':
+            envid = get_valid_envid(args.envid, envids, strict=True)
 
         if command == 'environments':
             result = list_environments(credentials=credentials)
