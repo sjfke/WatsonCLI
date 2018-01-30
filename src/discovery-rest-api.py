@@ -9,9 +9,9 @@ import sys
 import json
 import yaml
 import requests
-from _bsddb import api
 
 # http://pythonhosted.org/kitchen/unicode-frustrations.html
+from _bsddb import api
 UTF8Writer = codecs.getwriter('utf8')
 
 #===============================================================================
@@ -49,6 +49,9 @@ def unicode_safe_print(string):
     Safely print a string which may be UTF-8 or ASCII
     :param string:
     '''
+    from _bsddb import api
+
+    UTF8Writer = codecs.getwriter('utf8')
     # http://pythonhosted.org/kitchen/unicode-frustrations.html
     # https://stackoverflow.com/questions/21129020/how-to-fix-unicodedecodeerror-ascii-codec-cant-decode-byte
     if isinstance(string, str):
@@ -61,8 +64,36 @@ def unicode_safe_print(string):
 
 
 #===============================================================================
+# print_result
+#===============================================================================
+def print_result(result, format='JSON', callback=None):
+    '''
+    Print result (string, list) in JSON, YAML or TEXT (callback) format
+    :param result: the result (JSON) string to display
+    :param format: JSON, YAML, TEXT (use callback)
+    :param callback: custom printing routine
+    '''
+    if result is None:
+        if verbose >= 1:
+            print ("print_result: 'string' is None")
+        return
+
+    if callback:
+        callback(result)
+    elif format == 'JSON':
+        unicode_safe_print(result)
+    elif format == 'YAML':
+        unicode_safe_print(yaml.safe_dump(json.loads(result), encoding='utf-8', allow_unicode=True))
+    else:
+        unicode_safe_print(result)
+
+    return
+
+#===============================================================================
 # list_environments
 #===============================================================================
+
+
 def list_environments(credentials, raw=True):
     """
      Return Watson Discovery Environments
@@ -1012,6 +1043,46 @@ def query_collection(credentials, envid, colid=None, query=None, count=10, raw=T
 
 
 #===============================================================================
+# print_environments_list
+#===============================================================================
+def print_environments_list(result, title="Environments:"):
+    '''
+    Print Environments List in Human Format
+    :param result: Environments text or object to print
+    :param title: Title string
+    '''
+
+    print title + os.linesep + ("=" * len(title))
+
+    values = result
+    if isinstance(result, str):
+        values = json.loads(result)
+    elif isinstance(result, unicode):
+        values = json.loads(result)
+
+    for i, val in enumerate(values["environments"]):
+        if 'environment_id' in val:
+            print "[{0}]: {1[environment_id]}".format(i, val)
+            print "  environment_id: {0[environment_id]}".format(val)
+        else:
+            print "[{0}]:".format(i)
+
+        if 'name' in val:
+            print "  name: {0[name]}".format(val)
+        if 'description' in val:
+            print "  description: {0[description]}".format(val)
+        if 'read_only' in val:
+            print "  read_only: {0[read_only]}".format(val)
+        if 'created' in val:
+            print "  created: {0[created]}".format(val)
+        if 'updated' in val:
+            print "  updated: {0[updated]}".format(val)
+        print
+
+    return None
+
+
+#===============================================================================
 # https://www.ibm.com/watson/developercloud/discovery/api/v1/
 # https://console.bluemix.net/docs/services/discovery/getting-started.html#getting-started-with-the-api
 # __main__
@@ -1034,6 +1105,8 @@ if __name__ == "__main__":
     parser.add_argument('--docid', type=int, default=None, help='document index')
     parser.add_argument('-a', '--auth', default='.watson.cfg', help='Watson credentials file')
     parser.add_argument('--raw', help='JSON output', default=False, action='store_true')
+    parser.add_argument('-j', '--json', help='JSON output', default=False, action='store_true')
+    parser.add_argument('-y', '--yaml', help='YAML output', default=False, action='store_true')
     parser.add_argument('-s', '--separator', help='field delimiter', default='\n  ')
     parser.add_argument('-v', '--verbose', action='count', default=0)
     args = parser.parse_args()
@@ -1048,6 +1121,12 @@ if __name__ == "__main__":
     list_allowed = ['environments', 'configurations', 'collections', 'documents', 'environment', 'configuration', 'collection', 'document']
     delete_allowed = ['environment', 'configuration', 'collection', 'document']
     query_allowed = ['collection', 'document']
+
+    output_format = 'TEXT'
+    if args.json:
+        output_format = 'JSON'
+    if args.yaml:
+        output_format = 'YAML'
 
     if args.list:
         if not (args.list.lower() in list_allowed):
@@ -1074,22 +1153,14 @@ if __name__ == "__main__":
             sys.exit(1)
 
         if command == 'environments':
-            result = list_environments(credentials=credentials, raw=args.raw)
+            result = list_environments(credentials=credentials)
             if result is None:
                 print "No Environments?"
                 sys.exit(1)
-            elif args.raw:
-                unicode_safe_print(string=result)
+            elif output_format == 'TEXT':
+                print_result(result=result, callback=print_environments_list)
             else:
-                title = "Environments:"
-                print title + os.linesep + ("=" * len(title))
-                for i, val in enumerate(result):
-                    print "{0:d}:{2}configuration_id: {1[environment_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
-                    if 'created' in val:
-                        print "{1}created: {0[created]}".format(val, args.separator),
-                    if 'updated' in val:
-                        print "{1}updated: {0[updated]}".format(val, args.separator),
-                    print
+                print_result(result=result, format=output_format)
 
         elif command == 'configurations':
             result = list_configurations(credentials=credentials, envid=envid, raw=args.raw)
