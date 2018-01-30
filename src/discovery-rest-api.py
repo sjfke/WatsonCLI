@@ -78,14 +78,20 @@ def print_result(result, format='JSON', callback=None):
             print ("print_result: 'string' is None")
         return
 
+    values = result
+    if isinstance(result, str) or isinstance(result, unicode):
+        values = result
+    else:
+        values = json.dumps(result, sort_keys=True, indent=4, separators=(',', ': '))
+
     if callback:
         callback(result)
     elif format == 'JSON':
-        unicode_safe_print(result)
+        unicode_safe_print(values)
     elif format == 'YAML':
-        unicode_safe_print(yaml.safe_dump(json.loads(result), encoding='utf-8', allow_unicode=True))
+        unicode_safe_print(yaml.safe_dump(json.loads(values), encoding='utf-8', allow_unicode=True))
     else:
-        unicode_safe_print(result)
+        unicode_safe_print(values)
 
     return
 
@@ -1091,9 +1097,7 @@ def print_environments_list(result, title="Environments:"):
     print title + os.linesep + ("=" * len(title))
 
     values = result
-    if isinstance(result, str):
-        values = json.loads(result)
-    elif isinstance(result, unicode):
+    if isinstance(result, str) or isinstance(result, unicode):
         values = json.loads(result)
 
     for i, val in enumerate(values["environments"]):
@@ -1102,6 +1106,44 @@ def print_environments_list(result, title="Environments:"):
             print "  environment_id: {0[environment_id]}".format(val)
         else:
             print "[{0}]:".format(i)
+
+        if 'name' in val:
+            print "  name: {0[name]}".format(val)
+        if 'description' in val:
+            print "  description: {0[description]}".format(val)
+        if 'read_only' in val:
+            print "  read_only: {0[read_only]}".format(val)
+        if 'created' in val:
+            print "  created: {0[created]}".format(val)
+        if 'updated' in val:
+            print "  updated: {0[updated]}".format(val)
+        print
+
+    return None
+
+
+#===============================================================================
+# print_configurations_list
+#===============================================================================
+def print_configurations_list(result, title="Configurations:"):
+    '''
+    Print Configurations List in Human Format
+    :param result: Configurations text or object to print
+    :param title: Title string
+    '''
+
+    print title + os.linesep + ("=" * len(title))
+
+    values = result
+    if isinstance(result, str) or isinstance(result, unicode):
+        values = json.loads(result)
+
+    for i, val in enumerate(values):
+        if 'configuration_id' in val:
+            print "{0:d}: {1[configuration_id]}".format(i, val)
+            print "  configuration_id: {0[configuration_id]}".format(val)
+        else:
+            print "{0:d}:".format(i)
 
         if 'name' in val:
             print "  name: {0[name]}".format(val)
@@ -1188,18 +1230,11 @@ if __name__ == "__main__":
             result = list_configurations(credentials=credentials, envid=envid, raw=args.raw)
             if result is None:
                 print "No configurations for, '{0}'".format(envid)
-            elif args.raw:
-                unicode_safe_print(string=result)
+            elif output_format == 'TEXT':
+                print "EnvID: {0}".format(envid)
+                print_result(result=result, callback=print_configurations_list)
             else:
-                title = "Configurations (EnvID: {0}):".format(envid)
-                print title + os.linesep + ("=" * len(title))
-                for i, val in enumerate(result):
-                    print "{0:d}:{2}configuration_id: {1[configuration_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
-                    if 'created' in val:
-                        print "{1}created: {0[created]}".format(val, args.separator),
-                    if 'updated' in val:
-                        print "{1}updated: {0[updated]}".format(val, args.separator),
-                    print
+                print_result(result=result, format=output_format)
 
         elif command == 'collections':
             result = list_collections(credentials=credentials, envid=envid, raw=args.raw)
