@@ -446,7 +446,7 @@ def delete_document(credentials, envid, colid, docid, raw):
 #===============================================================================
 
 
-def list_environment(credentials, envid, raw=True):
+def list_environment(credentials, envid):
     """
      Return Watson Discovery Environment Details
     :param credentials: Watson credentials
@@ -471,43 +471,13 @@ def list_environment(credentials, envid, raw=True):
     if args.verbose >= 1:
         print "GET: {0}".format(r.url)
 
-#     {
-#       "environment_id" : "71cac327-84eb-4327-81da-24d49f14a445",
-#       "name" : "test api",
-#       "description" : "why not",
-#       "created" : "2017-12-26T19:42:05.004Z",
-#       "updated" : "2017-12-26T19:42:05.004Z",
-#       "status" : "active",
-#       "read_only" : false,
-#       "index_capacity" : {
-#         "documents" : {
-#           "available" : 0,
-#           "maximum_allowed" : 2000
-#         },
-#         "disk_usage" : {
-#           "used_bytes" : 162,
-#           "maximum_allowed_bytes" : 200000000
-#         },
-#         "collections" : {
-#           "available" : 1,
-#           "maximum_allowed" : 2
-#         }
-#       }
-#     }
-
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
             print "List environment Failed: {0}".format(r.status_code)
 
         return None
     else:
-        if raw:
-            return r.text
-        else:
-            environment = json.loads(r.text)
-            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True, default_flow_style=False)
-
-    return "Unknown Error: list_environment({0})".format(envid)
+        return r.text
 
 
 #===============================================================================
@@ -549,13 +519,35 @@ def list_configuration(credentials, envid, cfgid, raw=True):
 
         return None
     else:
-        if raw:
-            return r.text
-        else:
-            configuration = json.loads(r.text)
-            return yaml.safe_dump(configuration, encoding='utf-8', allow_unicode=True, default_flow_style=False)
+        return r.text
 
-    return "Unknown Error: list_configuration({0})".format(envid)
+
+#===============================================================================
+# get_valid_cfgid
+#===============================================================================
+def get_valid_cfgid(cfgid, cfgids, strict=False):
+    '''
+    Return a valid configuration_id string
+    :param cfgid: index
+    :param cfgids: list of valid configuration_ids
+    :param strict: exit or return None if no match
+    '''
+    try:
+        return cfgids[cfgid]
+    except IndexError:
+        if strict:
+            print "List Configuration: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+            print " envid={0}; cfgid={1}".format(args.envid, args.cfgid)
+            sys.exit(1)
+        else:
+            return None
+    except TypeError as e:
+        if strict:
+            print "List Configuration: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+            print " envid={1}; cfgid={2}; {0}".format(e, args.envid, args.cfgid)
+            sys.exit(1)
+        else:
+            return None
 
 
 #===============================================================================
@@ -1189,7 +1181,15 @@ def print_configurations_list(result, title="Configurations:"):
     return None
 
 
+#===============================================================================
+# print_collections_list
+#===============================================================================
 def print_collections_list(result, title="Collections:"):
+    '''
+    Print Collections List
+    :param result: Configurations text or object to print
+    :param title: Title string
+    '''
     print title + os.linesep + ("=" * len(title))
 
     values = result
@@ -1221,7 +1221,15 @@ def print_collections_list(result, title="Collections:"):
     return None
 
 
+#===============================================================================
+# print_documents_list
+#===============================================================================
 def print_documents_list(result, title="Documents:"):
+    '''
+    Print Documents List
+    :param result: Configurations text or object to print
+    :param title: Title string
+    '''
 
     values = result
     if isinstance(result, str):
@@ -1269,6 +1277,38 @@ def print_documents_list(result, title="Documents:"):
     print "Showing {0} out of {1} documents".format(len(values['results']), document_count)
 
     return None
+
+
+#===============================================================================
+# print_environment
+#===============================================================================
+def print_environment(result, title="Environment:"):
+    '''
+    Print the Environment
+    :param result: Configurations text or object to print
+    :param title: Title string
+    '''
+    print title + os.linesep + ("=" * len(title))
+
+    # simple Wrapper YAML output
+    print_result(result=result, format='YAML')
+
+
+#===============================================================================
+# print_configuration
+#===============================================================================
+def print_configuration(result, title="Configuration:"):
+    '''
+    Print the Configuration
+    :param result: Configurations text or object to print
+    :param title: Title string
+    '''
+    print title + os.linesep + ("=" * len(title))
+
+    # simple Wrapper YAML output
+    print_result(result=result, format='YAML')
+
+
 #===============================================================================
 # https://www.ibm.com/watson/developercloud/discovery/api/v1/
 # https://console.bluemix.net/docs/services/discovery/getting-started.html#getting-started-with-the-api
@@ -1371,26 +1411,28 @@ if __name__ == "__main__":
                 print_result(result=result, format=output_format)
 
         elif command == 'environment':
-            result = list_environment(credentials=credentials, envid=envid, raw=args.raw)
-            title = "Environment: {0}".format(envid)
-            print title + os.linesep + ("=" * len(title))
-            unicode_safe_print(string=result)
+            result = list_environment(credentials=credentials, envid=envid)
+            if result is None:
+                print "EnvID: {0}".format(envid)
+                print "  No documents found"
+            elif output_format == 'TEXT':
+                print "EnvID: {0}".format(envid)
+                print_result(result=result, callback=print_environment)
+            else:
+                print_result(result=result, format=output_format)
+
         elif command == 'configuration':
-            try:
-                cfgids = get_configuration_ids(credentials, envid)
-                cfgid = cfgids[args.cfgid]
-                result = list_configuration(credentials=credentials, envid=envid, cfgid=cfgid, raw=args.raw)
-                title = "Configuration: {0}".format(cfgid)
-                print title + os.linesep + ("=" * len(title))
-                unicode_safe_print(string=result)
-            except IndexError:
-                print "List Configuration: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={0}; cfgid={1}".format(args.envid, args.cfgid)
-                sys.exit(1)
-            except TypeError as e:
-                print "List Configuration: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={1}; cfgid={2}; {0}".format(e, args.envid, args.cfgid)
-                sys.exit(1)
+            cfgids = get_configuration_ids(credentials, envid)
+            cfgid = get_valid_cfgid(args.cfgid, cfgids, strict=True)
+            result = list_configuration(credentials=credentials, envid=envid, cfgid=cfgid, raw=args.raw)
+            if result is None:
+                print "EnvID: {0}".format(envid)
+                print "  No configurations found"
+            elif output_format == 'TEXT':
+                print "EnvID: {0}".format(envid)
+                print_result(result=result, callback=print_configuration)
+            else:
+                print_result(result=result, format=output_format)
 
         elif command == 'collection':
             colids = get_collections_ids(credentials, envid)
