@@ -89,7 +89,7 @@ def print_result(result, format='JSON', callback=None):
     elif format == 'JSON':
         unicode_safe_print(values)
     elif format == 'YAML':
-        unicode_safe_print(yaml.safe_dump(json.loads(values), encoding='utf-8', allow_unicode=True))
+        unicode_safe_print(yaml.safe_dump(json.loads(values), encoding='utf-8', allow_unicode=True, default_flow_style=False))
     else:
         unicode_safe_print(values)
 
@@ -435,7 +435,7 @@ def delete_document(credentials, envid, colid, docid, raw):
             return r.text
         else:
             environment = json.loads(r.text)
-            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     # print(r.text)
     return "delete_documents({0},{1},{2},{3})".format(credentials, envid, colid, docid)
@@ -504,7 +504,7 @@ def list_environment(credentials, envid, raw=True):
             return r.text
         else:
             environment = json.loads(r.text)
-            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     return "Unknown Error: list_environment({0})".format(envid)
 
@@ -552,7 +552,7 @@ def list_configuration(credentials, envid, cfgid, raw=True):
             return r.text
         else:
             configuration = json.loads(r.text)
-            return yaml.safe_dump(configuration, encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(configuration, encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     return "Unknown Error: list_configuration({0})".format(envid)
 
@@ -599,7 +599,7 @@ def list_collection(credentials, envid, colid, raw=True):
             return r.text
         else:
             collection = json.loads(r.text)
-            return yaml.safe_dump(collection, encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(collection, encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     return "Unknown Error: list_collecation({0})".format(envid)
 
@@ -647,7 +647,7 @@ def list_document(credentials, envid, colid, docid, raw=True):
             return r.text
         else:
             document = json.loads(r.text)
-            return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     return "Unknown Error: list document({0})".format(envid)
 
@@ -842,7 +842,7 @@ def create_collection(credentials, envid, name, cfgid, description=None, languag
             return r.text
         else:
             document = json.loads(r.text)
-            return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True, default_flow_style=False)
     else:
         if args.verbose >= 1:
             print "Create Collection Failed: {0}".format(r.status_code)
@@ -889,7 +889,7 @@ def delete_collection(credentials, envid, colid, raw=True):
         return r.text
     else:
         document = json.loads(r.text)
-        return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True)
+        return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     print "Unknown Error: delete_collection(envid={0}; cfgid={1})".format(envid, colid)
     sys.exit(1)
@@ -1019,7 +1019,7 @@ def query_document(credentials, envid, colid=None, docid=None, query=None, filte
         if raw:
             return r.text
         else:
-            return yaml.safe_dump(json.loads(r.text), encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(json.loads(r.text), encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     # return "list_collections({0},{1})".format(credentials,envid)
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
@@ -1076,7 +1076,7 @@ def query_collection(credentials, envid, colid=None, query=None, count=10, raw=T
             return r.text
         else:
             #environment = json.loads(r.text)
-            return yaml.safe_dump(json.loads(r.text), encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(json.loads(r.text), encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     # return "list_collections({0},{1})".format(credentials,envid)
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
