@@ -446,7 +446,7 @@ def delete_document(credentials, envid, colid, docid, raw):
 #===============================================================================
 
 
-def list_environment(credentials, envid, raw=True):
+def list_environment(credentials, envid):
     """
      Return Watson Discovery Environment Details
     :param credentials: Watson credentials
@@ -471,43 +471,13 @@ def list_environment(credentials, envid, raw=True):
     if args.verbose >= 1:
         print "GET: {0}".format(r.url)
 
-#     {
-#       "environment_id" : "71cac327-84eb-4327-81da-24d49f14a445",
-#       "name" : "test api",
-#       "description" : "why not",
-#       "created" : "2017-12-26T19:42:05.004Z",
-#       "updated" : "2017-12-26T19:42:05.004Z",
-#       "status" : "active",
-#       "read_only" : false,
-#       "index_capacity" : {
-#         "documents" : {
-#           "available" : 0,
-#           "maximum_allowed" : 2000
-#         },
-#         "disk_usage" : {
-#           "used_bytes" : 162,
-#           "maximum_allowed_bytes" : 200000000
-#         },
-#         "collections" : {
-#           "available" : 1,
-#           "maximum_allowed" : 2
-#         }
-#       }
-#     }
-
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
             print "List environment Failed: {0}".format(r.status_code)
 
         return None
     else:
-        if raw:
-            return r.text
-        else:
-            environment = json.loads(r.text)
-            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True, default_flow_style=False)
-
-    return "Unknown Error: list_environment({0})".format(envid)
+        return r.text
 
 
 #===============================================================================
@@ -1371,10 +1341,17 @@ if __name__ == "__main__":
                 print_result(result=result, format=output_format)
 
         elif command == 'environment':
-            result = list_environment(credentials=credentials, envid=envid, raw=args.raw)
-            title = "Environment: {0}".format(envid)
-            print title + os.linesep + ("=" * len(title))
-            unicode_safe_print(string=result)
+            result = list_environment(credentials=credentials, envid=envid)
+            if result is None:
+                print "{0}No documents found".format(args.separator),
+                print
+            elif output_format == 'TEXT':
+                title = "Environment: {0}".format(envid)
+                print title + os.linesep + ("=" * len(title))
+                print_result(result=result, format='YAML')
+            else:
+                print_result(result=result, format=output_format)
+
         elif command == 'configuration':
             try:
                 cfgids = get_configuration_ids(credentials, envid)
