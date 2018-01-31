@@ -78,9 +78,8 @@ def print_result(result, format='JSON', callback=None):
             print ("print_result: 'string' is None")
         return
 
-    values = result
     if isinstance(result, str) or isinstance(result, unicode):
-        values = result
+        values = json.dumps(json.loads(result), sort_keys=True, indent=4, separators=(',', ': '))
     else:
         values = json.dumps(result, sort_keys=True, indent=4, separators=(',', ': '))
 
@@ -335,11 +334,13 @@ def list_documents(credentials, envid, colid=None, count=10, raw=True):
 
         return None
     else:
-        if raw:
-            return r.text
-        else:
-            environment = json.loads(r.text)
-            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True)
+        # print(r.text)
+        return r.text
+#         if raw:
+#             return r.text
+#         else:
+#             environment = json.loads(r.text)
+#             return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True)
 
     # return "list_collections({0},{1})".format(credentials,envid)
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
@@ -687,16 +688,16 @@ def get_valid_envid(envid, envids, strict=False):
         try:
             return envids[envid]
         except IndexError:
-            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-            print " envid={0} (>= {2}); envids={1}".format(envid, envids, len(envids))
             if strict:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={0} (>= {2}); envids={1}".format(envid, envids, len(envids))
                 sys.exit(1)
             else:
                 return None
         except TypeError as e:
-            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-            print " envid={1} (>= {3}); {0}; envids={2}".format(e, envid, envids, len(envids))
             if strict:
+                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+                print " envid={1} (>= {3}); {0}; envids={2}".format(e, envid, envids, len(envids))
                 sys.exit(1)
             else:
                 return None
@@ -893,6 +894,34 @@ def delete_collection(credentials, envid, colid, raw=True):
 
     print "Unknown Error: delete_collection(envid={0}; cfgid={1})".format(envid, colid)
     sys.exit(1)
+
+
+#===============================================================================
+# get_valid_colid
+#===============================================================================
+def get_valid_colid(colid, colids, strict=False):
+    '''
+    Return a valid collection_id string
+    :param colid: index
+    :param colids: list of valid collection_ids
+    :param strict: return None or exit if no match
+    '''
+    try:
+        return colids[colid]
+    except IndexError:
+        if strict:
+            print "get_valid_colid: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0])
+            print "  colid={0}(>= {2}); colids={1}".format(colid, colids, len(colids))
+            sys.exit(1)
+        else:
+            return None
+    except TypeError as e:
+        if strict:
+            print "get_valid_colid: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0])
+            print "  colid={1}(>= {3}); colids={2}".format(e, colid, colids, len(colids))
+            sys.exit(1)
+        else:
+            return None
 
 
 #===============================================================================
@@ -1160,6 +1189,86 @@ def print_configurations_list(result, title="Configurations:"):
     return None
 
 
+def print_collections_list(result, title="Collections:"):
+    print title + os.linesep + ("=" * len(title))
+
+    values = result
+    if isinstance(result, str) or isinstance(result, unicode):
+        values = json.loads(result)
+
+    for i, val in enumerate(values):
+        if 'collection_id' in val:
+            print "{0:d}: {1[collection_id]}".format(i, val)
+            print "  collection_id: {0[collection_id]}".format(val)
+        else:
+            print "{0:d}:".format(i)
+
+        if 'configuration_id' in val:
+            print "  configuration_id: {0[configuration_id]}".format(val)
+        if 'name' in val:
+            print "  name: {0[name]}".format(val)
+        if 'status' in val:
+            print "  status: {0[status]}".format(val)
+        if 'language' in val:
+            print "  language: {0[language]}".format(val)
+        if 'created' in val:
+            print "  created: {0[created]}".format(val)
+        if 'updated' in val:
+            print "  updated: {0[updated]}".format(val)
+
+        print
+
+    return None
+
+
+def print_documents_list(result, title="Documents:"):
+
+    values = result
+    if isinstance(result, str):
+        values = json.loads(result)
+
+    if isinstance(result, unicode):
+        values = json.loads(result)
+        # http://pythonhosted.org/kitchen/unicode-frustrations.html
+        # https://stackoverflow.com/questions/21129020/how-to-fix-unicodedecodeerror-ascii-codec-cant-decode-byte
+        UTF8Writer = codecs.getwriter('utf8')
+        sys.stdout = UTF8Writer(sys.stdout)
+
+    document_count = values['matching_results']
+    newtitle = title + "(" + str(document_count) + ")"
+    print newtitle + os.linesep + ("=" * len(newtitle))
+
+    for i, val in enumerate(values['results']):
+
+        if 'id' in val:
+            print "{0:d}: {1[id]}".format(i, val)
+            print "  id: {0[id]}".format(val)
+        else:
+            print "{0:d}:".format(i)
+
+        if 'extracted_metadata' in val:
+            if 'filename' in val['extracted_metadata']:
+                print "  filename: ",
+                print val['extracted_metadata']['filename']
+            if 'file_type' in val['extracted_metadata']:
+                print "  file_type: ",
+                print val['extracted_metadata']['file_type']
+            if 'publicationdate' in val['extracted_metadata']:
+                print "  publicationdate: ",
+                print val['extracted_metadata']['publicationdate']
+            if 'sha1' in val['extracted_metadata']:
+                print "  sha1: ",
+                print val['extracted_metadata']['sha1']
+
+        if 'result_metadata' in val:
+            if 'score' in val['result_metadata']:
+                print "  score: {0[score]}".format(val['result_metadata'])
+
+        print
+
+    print "Showing {0} out of {1} documents".format(len(values['results']), document_count)
+
+    return None
 #===============================================================================
 # https://www.ibm.com/watson/developercloud/discovery/api/v1/
 # https://console.bluemix.net/docs/services/discovery/getting-started.html#getting-started-with-the-api
@@ -1240,47 +1349,26 @@ if __name__ == "__main__":
             result = list_collections(credentials=credentials, envid=envid, raw=args.raw)
             if result is None:
                 print "No collections for, '{0}'".format(envid)
-            elif args.raw:
-                unicode_safe_print(string=result)
+            elif output_format == 'TEXT':
+                print "EnvID: {0}".format(envid)
+                print_result(result=result, callback=print_collections_list)
             else:
-                title = "Collections (EnvID: {0}):".format(envid)
-                print title + os.linesep + ("=" * len(title))
-                for i, val in enumerate(result):
-                    print "{0:d}:{2}collection_id: {1[collection_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
-                    print "{1}lang: {0[language]}{1}status: {0[status]}".format(val, args.separator),
-                    if 'configuration_id' in val:
-                        print "{1}configuration_id: {0[configuration_id]}".format(val, args.separator),
-                    if 'created' in val:
-                        print "{1}created: {0[created]}".format(val, args.separator),
-                    if 'updated' in val:
-                        print "{1}updated: {0[updated]}".format(val, args.separator),
-
-                    print
+                print_result(result=result, format=output_format)
 
         elif command == 'documents':
-            try:
-                colids = get_collections_ids(credentials, envid)
-                colid = colids[args.colid]
-            except IndexError:
-                print "List Documents: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={0}; colid={1}".format(args.envid, args.colid)
-                sys.exit(1)
-            except TypeError as e:
-                print "List Documents: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
-                sys.exit(1)
-
+            colids = get_collections_ids(credentials, envid)
+            colid = get_valid_colid(args.colid, colids, strict=True)
             result = list_documents(credentials=credentials, envid=envid, colid=colid, count=args.count, raw=args.raw)
-            title = "Documents (EnvID: {0}):".format(envid)
-            print title + os.linesep + ("=" * len(title))
+
             if result is None:
                 print "{1}Collection: '{0}'".format(colid, args.separator),
                 print "{0}No documents found".format(args.separator),
                 print
-            elif args.raw:
-                unicode_safe_print(string=result)
+            elif output_format == 'TEXT':
+                print "EnvID: {0}".format(envid)
+                print_result(result=result, callback=print_documents_list)
             else:
-                unicode_safe_print(string=result)
+                print_result(result=result, format=output_format)
 
         elif command == 'environment':
             result = list_environment(credentials=credentials, envid=envid, raw=args.raw)
