@@ -1160,6 +1160,38 @@ def print_configurations_list(result, title="Configurations:"):
     return None
 
 
+def print_collections_list(result, title="Collections:"):
+    print title + os.linesep + ("=" * len(title))
+
+    values = result
+    if isinstance(result, str) or isinstance(result, unicode):
+        values = json.loads(result)
+
+    for i, val in enumerate(values):
+        if 'collection_id' in val:
+            print "{0:d}: {1[collection_id]}".format(i, val)
+            print "  collection_id: {0[collection_id]}".format(val)
+        else:
+            print "{0:d}:".format(i)
+
+        if 'configuration_id' in val:
+            print "  configuration_id: {0[configuration_id]}".format(val)
+        if 'name' in val:
+            print "  name: {0[name]}".format(val)
+        if 'status' in val:
+            print "  status: {0[status]}".format(val)
+        if 'language' in val:
+            print "  language: {0[language]}".format(val)
+        if 'created' in val:
+            print "  created: {0[created]}".format(val)
+        if 'updated' in val:
+            print "  updated: {0[updated]}".format(val)
+
+        print
+
+    return None
+
+
 #===============================================================================
 # https://www.ibm.com/watson/developercloud/discovery/api/v1/
 # https://console.bluemix.net/docs/services/discovery/getting-started.html#getting-started-with-the-api
@@ -1240,22 +1272,11 @@ if __name__ == "__main__":
             result = list_collections(credentials=credentials, envid=envid, raw=args.raw)
             if result is None:
                 print "No collections for, '{0}'".format(envid)
-            elif args.raw:
-                unicode_safe_print(string=result)
+            elif output_format == 'TEXT':
+                print "EnvID: {0}".format(envid)
+                print_result(result=result, callback=print_collections_list)
             else:
-                title = "Collections (EnvID: {0}):".format(envid)
-                print title + os.linesep + ("=" * len(title))
-                for i, val in enumerate(result):
-                    print "{0:d}:{2}collection_id: {1[collection_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
-                    print "{1}lang: {0[language]}{1}status: {0[status]}".format(val, args.separator),
-                    if 'configuration_id' in val:
-                        print "{1}configuration_id: {0[configuration_id]}".format(val, args.separator),
-                    if 'created' in val:
-                        print "{1}created: {0[created]}".format(val, args.separator),
-                    if 'updated' in val:
-                        print "{1}updated: {0[updated]}".format(val, args.separator),
-
-                    print
+                print_result(result=result, format=output_format)
 
         elif command == 'documents':
             try:
