@@ -9,9 +9,9 @@ import sys
 import json
 import yaml
 import requests
-from _bsddb import api
 
 # http://pythonhosted.org/kitchen/unicode-frustrations.html
+from _bsddb import api
 UTF8Writer = codecs.getwriter('utf8')
 
 #===============================================================================
@@ -49,6 +49,9 @@ def unicode_safe_print(string):
     Safely print a string which may be UTF-8 or ASCII
     :param string:
     '''
+    from _bsddb import api
+
+    UTF8Writer = codecs.getwriter('utf8')
     # http://pythonhosted.org/kitchen/unicode-frustrations.html
     # https://stackoverflow.com/questions/21129020/how-to-fix-unicodedecodeerror-ascii-codec-cant-decode-byte
     if isinstance(string, str):
@@ -61,8 +64,42 @@ def unicode_safe_print(string):
 
 
 #===============================================================================
+# print_result
+#===============================================================================
+def print_result(result, format='JSON', callback=None):
+    '''
+    Print result (string, list) in JSON, YAML or TEXT (callback) format
+    :param result: the result (JSON) string to display
+    :param format: JSON, YAML, TEXT (use callback)
+    :param callback: custom printing routine
+    '''
+    if result is None:
+        if verbose >= 1:
+            print ("print_result: 'string' is None")
+        return
+
+    values = result
+    if isinstance(result, str) or isinstance(result, unicode):
+        values = result
+    else:
+        values = json.dumps(result, sort_keys=True, indent=4, separators=(',', ': '))
+
+    if callback:
+        callback(result)
+    elif format == 'JSON':
+        unicode_safe_print(values)
+    elif format == 'YAML':
+        unicode_safe_print(yaml.safe_dump(json.loads(values), encoding='utf-8', allow_unicode=True, default_flow_style=False))
+    else:
+        unicode_safe_print(values)
+
+    return
+
+#===============================================================================
 # list_environments
 #===============================================================================
+
+
 def list_environments(credentials, raw=True):
     """
      Return Watson Discovery Environments
@@ -398,7 +435,7 @@ def delete_document(credentials, envid, colid, docid, raw):
             return r.text
         else:
             environment = json.loads(r.text)
-            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     # print(r.text)
     return "delete_documents({0},{1},{2},{3})".format(credentials, envid, colid, docid)
@@ -467,7 +504,7 @@ def list_environment(credentials, envid, raw=True):
             return r.text
         else:
             environment = json.loads(r.text)
-            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     return "Unknown Error: list_environment({0})".format(envid)
 
@@ -515,7 +552,7 @@ def list_configuration(credentials, envid, cfgid, raw=True):
             return r.text
         else:
             configuration = json.loads(r.text)
-            return yaml.safe_dump(configuration, encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(configuration, encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     return "Unknown Error: list_configuration({0})".format(envid)
 
@@ -562,7 +599,7 @@ def list_collection(credentials, envid, colid, raw=True):
             return r.text
         else:
             collection = json.loads(r.text)
-            return yaml.safe_dump(collection, encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(collection, encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     return "Unknown Error: list_collecation({0})".format(envid)
 
@@ -610,7 +647,7 @@ def list_document(credentials, envid, colid, docid, raw=True):
             return r.text
         else:
             document = json.loads(r.text)
-            return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     return "Unknown Error: list document({0})".format(envid)
 
@@ -634,6 +671,42 @@ def get_environment_ids(credentials):
             results.append(env['environment_id'])
 
     return results
+
+
+#===============================================================================
+# get_valid_envid
+#===============================================================================
+def get_valid_envid(envid, envids, strict=False):
+    '''
+    Return a valid environment_id string
+    :param envid: index
+    :param envids: list of valid enviroment_ids
+    :param strict: exit or return None if no match
+    '''
+    if envid is not None:
+        try:
+            return envids[envid]
+        except IndexError:
+            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+            print " envid={0} (>= {2}); envids={1}".format(envid, envids, len(envids))
+            if strict:
+                sys.exit(1)
+            else:
+                return None
+        except TypeError as e:
+            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
+            print " envid={1} (>= {3}); {0}; envids={2}".format(e, envid, envids, len(envids))
+            if strict:
+                sys.exit(1)
+            else:
+                return None
+    else:
+        print "Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0])
+        print " envid={0} (>= {2}); envids={1}".format(envid, envids, len(envids))
+        if strict:
+            sys.exit(1)
+        else:
+            return None
 
 
 #===============================================================================
@@ -769,7 +842,7 @@ def create_collection(credentials, envid, name, cfgid, description=None, languag
             return r.text
         else:
             document = json.loads(r.text)
-            return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True, default_flow_style=False)
     else:
         if args.verbose >= 1:
             print "Create Collection Failed: {0}".format(r.status_code)
@@ -816,7 +889,7 @@ def delete_collection(credentials, envid, colid, raw=True):
         return r.text
     else:
         document = json.loads(r.text)
-        return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True)
+        return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     print "Unknown Error: delete_collection(envid={0}; cfgid={1})".format(envid, colid)
     sys.exit(1)
@@ -946,7 +1019,7 @@ def query_document(credentials, envid, colid=None, docid=None, query=None, filte
         if raw:
             return r.text
         else:
-            return yaml.safe_dump(json.loads(r.text), encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(json.loads(r.text), encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     # return "list_collections({0},{1})".format(credentials,envid)
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
@@ -1003,12 +1076,88 @@ def query_collection(credentials, envid, colid=None, query=None, count=10, raw=T
             return r.text
         else:
             #environment = json.loads(r.text)
-            return yaml.safe_dump(json.loads(r.text), encoding='utf-8', allow_unicode=True)
+            return yaml.safe_dump(json.loads(r.text), encoding='utf-8', allow_unicode=True, default_flow_style=False)
 
     # return "list_collections({0},{1})".format(credentials,envid)
     # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
     # print(r.text)
     return "query_collection({0},{1},{2})".format(credentials, envid, colid)
+
+
+#===============================================================================
+# print_environments_list
+#===============================================================================
+def print_environments_list(result, title="Environments:"):
+    '''
+    Print Environments List in Human Format
+    :param result: Environments text or object to print
+    :param title: Title string
+    '''
+
+    print title + os.linesep + ("=" * len(title))
+
+    values = result
+    if isinstance(result, str) or isinstance(result, unicode):
+        values = json.loads(result)
+
+    for i, val in enumerate(values["environments"]):
+        if 'environment_id' in val:
+            print "[{0}]: {1[environment_id]}".format(i, val)
+            print "  environment_id: {0[environment_id]}".format(val)
+        else:
+            print "[{0}]:".format(i)
+
+        if 'name' in val:
+            print "  name: {0[name]}".format(val)
+        if 'description' in val:
+            print "  description: {0[description]}".format(val)
+        if 'read_only' in val:
+            print "  read_only: {0[read_only]}".format(val)
+        if 'created' in val:
+            print "  created: {0[created]}".format(val)
+        if 'updated' in val:
+            print "  updated: {0[updated]}".format(val)
+        print
+
+    return None
+
+
+#===============================================================================
+# print_configurations_list
+#===============================================================================
+def print_configurations_list(result, title="Configurations:"):
+    '''
+    Print Configurations List in Human Format
+    :param result: Configurations text or object to print
+    :param title: Title string
+    '''
+
+    print title + os.linesep + ("=" * len(title))
+
+    values = result
+    if isinstance(result, str) or isinstance(result, unicode):
+        values = json.loads(result)
+
+    for i, val in enumerate(values):
+        if 'configuration_id' in val:
+            print "{0:d}: {1[configuration_id]}".format(i, val)
+            print "  configuration_id: {0[configuration_id]}".format(val)
+        else:
+            print "{0:d}:".format(i)
+
+        if 'name' in val:
+            print "  name: {0[name]}".format(val)
+        if 'description' in val:
+            print "  description: {0[description]}".format(val)
+        if 'read_only' in val:
+            print "  read_only: {0[read_only]}".format(val)
+        if 'created' in val:
+            print "  created: {0[created]}".format(val)
+        if 'updated' in val:
+            print "  updated: {0[updated]}".format(val)
+        print
+
+    return None
 
 
 #===============================================================================
@@ -1034,6 +1183,8 @@ if __name__ == "__main__":
     parser.add_argument('--docid', type=int, default=None, help='document index')
     parser.add_argument('-a', '--auth', default='.watson.cfg', help='Watson credentials file')
     parser.add_argument('--raw', help='JSON output', default=False, action='store_true')
+    parser.add_argument('-j', '--json', help='JSON output', default=False, action='store_true')
+    parser.add_argument('-y', '--yaml', help='YAML output', default=False, action='store_true')
     parser.add_argument('-s', '--separator', help='field delimiter', default='\n  ')
     parser.add_argument('-v', '--verbose', action='count', default=0)
     args = parser.parse_args()
@@ -1049,6 +1200,12 @@ if __name__ == "__main__":
     delete_allowed = ['environment', 'configuration', 'collection', 'document']
     query_allowed = ['collection', 'document']
 
+    output_format = 'TEXT'
+    if args.json:
+        output_format = 'JSON'
+    if args.yaml:
+        output_format = 'YAML'
+
     if args.list:
         if not (args.list.lower() in list_allowed):
             print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.list)
@@ -1056,57 +1213,28 @@ if __name__ == "__main__":
 
         command = args.list.lower()
 
-        if args.envid is not None:
-            try:
-                envid = envids[args.envid]
-            except IndexError:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={0}".format(args.envid)
-                sys.exit(1)
-            except TypeError as e:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={1}; {0}".format(e, args.envid)
-                sys.exit(1)
-        elif command == 'environments':
-            pass
-        else:
-            print "Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0])
-            sys.exit(1)
+        if command != 'environments':
+            envid = get_valid_envid(args.envid, envids, strict=True)
 
         if command == 'environments':
-            result = list_environments(credentials=credentials, raw=args.raw)
+            result = list_environments(credentials=credentials)
             if result is None:
                 print "No Environments?"
                 sys.exit(1)
-            elif args.raw:
-                unicode_safe_print(string=result)
+            elif output_format == 'TEXT':
+                print_result(result=result, callback=print_environments_list)
             else:
-                title = "Environments:"
-                print title + os.linesep + ("=" * len(title))
-                for i, val in enumerate(result):
-                    print "{0:d}:{2}configuration_id: {1[environment_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
-                    if 'created' in val:
-                        print "{1}created: {0[created]}".format(val, args.separator),
-                    if 'updated' in val:
-                        print "{1}updated: {0[updated]}".format(val, args.separator),
-                    print
+                print_result(result=result, format=output_format)
 
         elif command == 'configurations':
             result = list_configurations(credentials=credentials, envid=envid, raw=args.raw)
             if result is None:
                 print "No configurations for, '{0}'".format(envid)
-            elif args.raw:
-                unicode_safe_print(string=result)
+            elif output_format == 'TEXT':
+                print "EnvID: {0}".format(envid)
+                print_result(result=result, callback=print_configurations_list)
             else:
-                title = "Configurations (EnvID: {0}):".format(envid)
-                print title + os.linesep + ("=" * len(title))
-                for i, val in enumerate(result):
-                    print "{0:d}:{2}configuration_id: {1[configuration_id]}{2}name: {1[name]}{2}description: {1[description]}".format(i, val, args.separator),
-                    if 'created' in val:
-                        print "{1}created: {0[created]}".format(val, args.separator),
-                    if 'updated' in val:
-                        print "{1}updated: {0[updated]}".format(val, args.separator),
-                    print
+                print_result(result=result, format=output_format)
 
         elif command == 'collections':
             result = list_collections(credentials=credentials, envid=envid, raw=args.raw)
