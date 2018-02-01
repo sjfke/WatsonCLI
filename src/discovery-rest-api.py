@@ -523,43 +523,14 @@ def list_configuration(credentials, envid, cfgid, raw=True):
 
 
 #===============================================================================
-# get_valid_cfgid
-#===============================================================================
-def get_valid_cfgid(cfgid, cfgids, strict=False):
-    '''
-    Return a valid configuration_id string
-    :param cfgid: index
-    :param cfgids: list of valid configuration_ids
-    :param strict: exit or return None if no match
-    '''
-    try:
-        return cfgids[cfgid]
-    except IndexError:
-        if strict:
-            print "List Configuration: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-            print " envid={0}; cfgid={1}".format(args.envid, args.cfgid)
-            sys.exit(1)
-        else:
-            return None
-    except TypeError as e:
-        if strict:
-            print "List Configuration: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-            print " envid={1}; cfgid={2}; {0}".format(e, args.envid, args.cfgid)
-            sys.exit(1)
-        else:
-            return None
-
-
-#===============================================================================
 # list_collection
 #===============================================================================
-def list_collection(credentials, envid, colid, raw=True):
+def list_collection(credentials, envid, colid):
     """
      Return Watson Discovery Collection Details
     :param credentials: Watson credentials
     :param envid: Watson environment_id string
     :param colid: Watson collection_id string
-    :param raw: JSON or YAML output
     """
     if envid is None:
         print "Invalid envid, '{0}'".format(envid)
@@ -594,14 +565,13 @@ def list_collection(credentials, envid, colid, raw=True):
 #===============================================================================
 # list_document
 #===============================================================================
-def list_document(credentials, envid, colid, docid, raw=True):
+def list_document(credentials, envid, colid, docid):
     """
      Return Watson Discovery Document Details
     :param credentials: Watson credentials
     :param envid: Watson environment_id string
     :param colid: Watson collection_id string
     :param docid: Watson document_id string
-    :param raw: JSON or YAML output
     """
     if envid is None:
         print "Invalid envid, '{0}'".format(envid)
@@ -630,13 +600,7 @@ def list_document(credentials, envid, colid, docid, raw=True):
 
         return None
     else:
-        if raw:
-            return r.text
-        else:
-            document = json.loads(r.text)
-            return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True, default_flow_style=False)
-
-    return "Unknown Error: list document({0})".format(envid)
+        return r.text
 
 
 #===============================================================================
@@ -658,42 +622,6 @@ def get_environment_ids(credentials):
             results.append(env['environment_id'])
 
     return results
-
-
-#===============================================================================
-# get_valid_envid
-#===============================================================================
-def get_valid_envid(envid, envids, strict=False):
-    '''
-    Return a valid environment_id string
-    :param envid: index
-    :param envids: list of valid enviroment_ids
-    :param strict: exit or return None if no match
-    '''
-    if envid is not None:
-        try:
-            return envids[envid]
-        except IndexError:
-            if strict:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={0} (>= {2}); envids={1}".format(envid, envids, len(envids))
-                sys.exit(1)
-            else:
-                return None
-        except TypeError as e:
-            if strict:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={1} (>= {3}); {0}; envids={2}".format(e, envid, envids, len(envids))
-                sys.exit(1)
-            else:
-                return None
-    else:
-        print "Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0])
-        print " envid={0} (>= {2}); envids={1}".format(envid, envids, len(envids))
-        if strict:
-            sys.exit(1)
-        else:
-            return None
 
 
 #===============================================================================
@@ -883,28 +811,28 @@ def delete_collection(credentials, envid, colid, raw=True):
 
 
 #===============================================================================
-# get_valid_colid
+# get_valid_id_string
 #===============================================================================
-def get_valid_colid(colid, colids, strict=False):
+def get_valid_id_string(index, id_list, strict=False):
     '''
-    Return a valid collection_id string
-    :param colid: index
-    :param colids: list of valid collection_ids
+    Return a valid collection_id string, trapping any list index errors
+    :param index: index
+    :param id_list: list of valid id_strings
     :param strict: return None or exit if no match
     '''
     try:
-        return colids[colid]
+        return id_list[index]
     except IndexError:
         if strict:
-            print "get_valid_colid: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0])
-            print "  colid={0}(>= {2}); colids={1}".format(colid, colids, len(colids))
+            print "get_valid_id_string: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0])
+            print "  index={0}(>= {2}); id_list={1}".format(index, id_list, len(id_list))
             sys.exit(1)
         else:
             return None
     except TypeError as e:
         if strict:
-            print "get_valid_colid: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0])
-            print "  colid={1}(>= {3}); colids={2}".format(e, colid, colids, len(colids))
+            print "get_valid_id_string: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0])
+            print "  index={1}(>= {3}); id_list={2}".format(e, index, id_list, len(id_list))
             sys.exit(1)
         else:
             return None
@@ -913,6 +841,8 @@ def get_valid_colid(colid, colids, strict=False):
 #===============================================================================
 # upload_document
 #===============================================================================
+
+
 def upload_document(credentials, envid, colid, file_name, raw=True):
     '''
     Upload a document into a collection in the environment
@@ -1306,9 +1236,24 @@ def print_configuration(result, title="Configuration:"):
 #===============================================================================
 # print_collection
 #===============================================================================
-def print_collection(result, title="Configuration:"):
+def print_collection(result, title="Collection:"):
     '''
-    Print the Configuration
+    Print the Collection
+    :param result: Configurations text or object to print
+    :param title: Title string
+    '''
+    print title + os.linesep + ("=" * len(title))
+
+    # simple Wrapper YAML output
+    print_result(result=result, format='YAML')
+
+
+#===============================================================================
+# print_document
+#===============================================================================
+def print_document(result, title="Document:"):
+    '''
+    Print the Document
     :param result: Configurations text or object to print
     :param title: Title string
     '''
@@ -1372,7 +1317,7 @@ if __name__ == "__main__":
         command = args.list.lower()
 
         if command != 'environments':
-            envid = get_valid_envid(args.envid, envids, strict=True)
+            envid = get_valid_id_string(args.envid, envids, strict=True)
 
         if command == 'environments':
             result = list_environments(credentials=credentials)
@@ -1406,7 +1351,7 @@ if __name__ == "__main__":
 
         elif command == 'documents':
             colids = get_collections_ids(credentials, envid)
-            colid = get_valid_colid(args.colid, colids, strict=True)
+            colid = get_valid_id_string(args.colid, colids, strict=True)
             result = list_documents(credentials=credentials, envid=envid, colid=colid, count=args.count, raw=args.raw)
 
             if result is None:
@@ -1432,7 +1377,7 @@ if __name__ == "__main__":
 
         elif command == 'configuration':
             cfgids = get_configuration_ids(credentials, envid)
-            cfgid = get_valid_cfgid(args.cfgid, cfgids, strict=True)
+            cfgid = get_valid_id_string(args.cfgid, cfgids, strict=True)
             result = list_configuration(credentials=credentials, envid=envid, cfgid=cfgid, raw=args.raw)
             if result is None:
                 print "EnvID: {0}".format(envid)
@@ -1445,11 +1390,11 @@ if __name__ == "__main__":
 
         elif command == 'collection':
             colids = get_collections_ids(credentials, envid)
-            colid = get_valid_colid(args.colid, colids, strict=True)
-            result = list_collection(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
+            colid = get_valid_id_string(args.colid, colids, strict=True)
+            result = list_collection(credentials=credentials, envid=envid, colid=colid)
             if result is None:
                 print "EnvID: {0}".format(envid)
-                print "  No configurations found"
+                print "  No collection found"
             elif output_format == 'TEXT':
                 print "EnvID: {0}".format(envid)
                 print_result(result=result, callback=print_collection)
@@ -1458,22 +1403,18 @@ if __name__ == "__main__":
 
         elif command == 'document':
             colids = get_collections_ids(credentials, envid)
-            try:
-                colid = colids[args.colid]
-                docids = get_document_ids(credentials=credentials, envid=envid, colid=colid, count=args.count)
-                docid = docids[args.docid]
-                result = list_document(credentials=credentials, envid=envid, colid=colid, docid=docid, raw=args.raw)
-                title = "Document: {0}".format(docid)
-                print title + os.linesep + ("=" * len(title))
-                unicode_safe_print(string=result)
-            except IndexError:
-                print "List Document: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={0}; colid={1}; docid={2}; count={3}".format(args.envid, args.colid, args.docid, args.count)
-                sys.exit(1)
-            except TypeError as e:
-                print "List Document: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={1}; colid={2}; docid={3} count={4}; {0}".format(e, args.envid, args.colid, args.docid, args.count)
-                sys.exit(1)
+            colid = get_valid_id_string(args.colid, colids, strict=True)
+            docids = get_document_ids(credentials=credentials, envid=envid, colid=colid, count=args.count)
+            docid = get_valid_id_string(args.docid, docids, strict=True)
+            result = list_document(credentials=credentials, envid=envid, colid=colid, docid=docid)
+            if result is None:
+                print "EnvID: {0}".format(envid)
+                print "  No document found"
+            elif output_format == 'TEXT':
+                print "EnvID: {0}".format(envid)
+                print_result(result=result, callback=print_document)
+            else:
+                print_result(result=result, format=output_format)
 
         else:
             print "Error: invalid List option, '{0}'".format(args.list)
