@@ -841,16 +841,13 @@ def get_valid_id_string(index, id_list, strict=False):
 #===============================================================================
 # upload_document
 #===============================================================================
-
-
-def upload_document(credentials, envid, colid, file_name, raw=True):
+def upload_document(credentials, envid, colid, file_name):
     '''
     Upload a document into a collection in the environment
     :param credentials: Watson Credentials (username, password, version)
     :param envid: mandatory environment_id string
     :param colid: mandatory collection_id string
     :param file_name: file to upload
-    :param raw: True (JSON), False (YAML)
     '''
     import magic
 
@@ -910,7 +907,8 @@ def upload_document(credentials, envid, colid, file_name, raw=True):
     if r.status_code == requests.codes.ok or r.status_code == requests.codes.accepted:
         return r.text
     else:
-        print "Upload File Failed: {0}".format(r.status_code)
+        if args.verbose >= 1:
+            print "Upload File Failed: {0}".format(r.status_code)
         return None
 
 
@@ -1421,22 +1419,20 @@ if __name__ == "__main__":
             sys.exit(1)
 
     elif args.add:
-        try:
-            envid = envids[args.envid]
-            colids = get_collections_ids(credentials, envid)
-            colid = colids[args.colid]
-            result = upload_document(credentials=credentials, envid=envid, colid=colid, file_name=args.add, raw=args.raw)
+        envid = get_valid_id_string(args.envid, envids, strict=True)
+        colids = get_collections_ids(credentials, envid)
+        colid = get_valid_id_string(args.colid, colids, strict=True)
+        result = upload_document(credentials=credentials, envid=envid, colid=colid, file_name=args.add)
+        if result is None:
+            print "EnvID: {0}".format(envid)
+            print "  No document found"
+        elif output_format == 'TEXT':
+            print "EnvID: {0}".format(envid)
             title = "Add Document: '{0}' (ColID {1})".format(args.add, colid)
             print title + os.linesep + ("=" * len(title))
-            unicode_safe_print(string=result)
-        except IndexError:
-            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-            print " envid={0}; colid={1}".format(args.envid, args.colid)
-            sys.exit(1)
-        except TypeError as e:
-            print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-            print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
-            sys.exit(1)
+            print_result(result=result, format="YAML")
+        else:
+            print_result(result=result, format=output_format)
 
     elif args.create:
         if not (args.create.lower() in create_allowed):
