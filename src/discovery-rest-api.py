@@ -391,14 +391,13 @@ def get_document_ids(credentials, envid, colid, count=10):
     return document_ids
 
 
-def delete_document(credentials, envid, colid, docid, raw):
+def delete_document(credentials, envid, colid, docid):
     '''
     Delete a document from a collection
     :param credentials: Watson credentials
     :param envid: Watson environment_id string
     :param colid: collection_id string
     :param docid: document_id string
-    :param raw: True JSON output, YAML otherwise
     '''
     if envid is None:
         print "Invalid envid, '{0}'".format(envid)
@@ -432,14 +431,8 @@ def delete_document(credentials, envid, colid, docid, raw):
 
         return None
     else:
-        if raw:
-            return r.text
-        else:
-            environment = json.loads(r.text)
-            return yaml.safe_dump(environment, encoding='utf-8', allow_unicode=True, default_flow_style=False)
+        return r.text
 
-    # print(r.text)
-    return "delete_documents({0},{1},{2},{3})".format(credentials, envid, colid, docid)
 
 #===============================================================================
 # list_environment
@@ -766,13 +759,12 @@ def create_collection(credentials, envid, name, cfgid, description=None, languag
 #===============================================================================
 # delete_collection
 #===============================================================================
-def delete_collection(credentials, envid, colid, raw=True):
+def delete_collection(credentials, envid, colid):
     '''
     Delete collection in Watson environment
     :param credentials: Watson Credentials (username, password, version)
     :param envid: mandatory environment_id string
     :param colid: mandatory collection_id string
-    :param raw: True (JSON), False (YAML)
     '''
 
     if envid is None:
@@ -795,14 +787,7 @@ def delete_collection(credentials, envid, colid, raw=True):
     if args.verbose >= 1:
         print "DELETE {0}".format(r.url)
 
-    if raw:
-        return r.text
-    else:
-        document = json.loads(r.text)
-        return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True, default_flow_style=False)
-
-    print "Unknown Error: delete_collection(envid={0}; cfgid={1})".format(envid, colid)
-    sys.exit(1)
+    return r.text
 
 
 #===============================================================================
@@ -1471,49 +1456,44 @@ if __name__ == "__main__":
 
         command = args.delete.lower()
         if args.envid is not None:
-            try:
-                envid = envids[args.envid]
-                if command == 'environment':
-                    result = delete_environment(credentials=credentials, envid=envid)
-                    unicode_safe_print(string=result)
-                    sys.exit(0)
-                elif command == 'collection':
-                    colids = get_collections_ids(credentials=credentials, envid=envid)
-                    if colids:
-                        colid = colids[args.colid]
-                        result = delete_collection(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
-                        unicode_safe_print(string=result)
-                        sys.exit(0)
-                    else:
-                        print "No collections found?"
-                        sys.exit(1)
-                elif command == 'document':
-                    colids = get_collections_ids(credentials=credentials, envid=envid)
-                    if colids:
-                        colid = colids[args.colid]
-                        docids = get_document_ids(credentials=credentials, envid=envid, colid=colid, count=args.count)
+            envid = get_valid_id_string(args.envid, envids, strict=True)
+            if command == 'environment':
+                result = delete_environment(credentials=credentials, envid=envid)
+            elif command == 'collection':
+                colids = get_collections_ids(credentials=credentials, envid=envid)
+                if colids:
+                    colid = get_valid_id_string(args.colid, colids, strict=True)
+                    result = delete_collection(credentials=credentials, envid=envid, colid=colid)
+                else:
+                    print "DELETE: {0}, No collections found?".format(command)
+                    sys.exit(1)
+            elif command == 'document':
+                colids = get_collections_ids(credentials=credentials, envid=envid)
+                if colids:
+                    colid = get_valid_id_string(args.colid, colids, strict=True)
+                    docids = get_document_ids(credentials=credentials, envid=envid, colid=colid, count=args.count)
 
-                        if docids:
-                            docid = docids[args.docid]
-                            result = delete_document(credentials=credentials, envid=envid, colid=colid, docid=docid, raw=args.raw)
-                            unicode_safe_print(string=result)
-                            sys.exit(0)
-                        else:
-                            print "No documents found?"
-                            sys.exit(1)
+                    if docids:
+                        docid = get_valid_id_string(args.docid, docids, strict=True)
+                        result = delete_document(credentials=credentials, envid=envid, colid=colid, docid=docid)
                     else:
-                        print "No collections found?"
+                        print "DELETE: No document found?"
                         sys.exit(1)
+                else:
+                    print "DELETE: {0}, No collections found?".format(command)
+                    sys.exit(1)
 
-            except IndexError:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={0}; colid={1}; cfgid={2}".format(args.envid, args.colid, args.cfgid)
+            if result is None:
+                print "EnvID: {0}".format(envid)
+                print "Delete {0} failed".format(command)
                 sys.exit(1)
-            except TypeError as e:
-                print "Delete:"
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={1}; colid={2}; cfgid={3}; {0}".format(e, args.envid, args.colid, args.cfgid)
-                sys.exit(1)
+            elif output_format == 'TEXT':
+                print "EnvID: {0}".format(envid)
+                title = "Delete {0} succeeded".format(command)
+                print title + os.linesep + ("=" * len(title))
+                print_result(result=result, format="YAML")
+            else:
+                print_result(result=result, format=output_format)
 
     elif args.query:
         if not (args.query.lower() in query_allowed):
