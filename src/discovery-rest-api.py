@@ -895,7 +895,7 @@ def upload_document(credentials, envid, colid, file_name):
 #===============================================================================
 # query_document
 #===============================================================================
-def query_document(credentials, envid, colid=None, docid=None, query=None, filtered=True, raw=True):
+def query_document(credentials, envid, colid=None, docid=None, query=None, filtered=True):
     """
     Query a single document
     :param credentials: Watson credentials
@@ -905,7 +905,6 @@ def query_document(credentials, envid, colid=None, docid=None, query=None, filte
     :param query: JSON string query
     :param filtered: return only enriched_text.(concepts,keywords,entities,categories)
     :param count: Number of documents to list
-    :param raw: JSON output
     """
     if envid is None:
         print "Invalid envid, '{0}'".format(envid)
@@ -939,21 +938,13 @@ def query_document(credentials, envid, colid=None, docid=None, query=None, filte
 
         return None
     else:
-        if raw:
-            return r.text
-        else:
-            return yaml.safe_dump(json.loads(r.text), encoding='utf-8', allow_unicode=True, default_flow_style=False)
-
-    # return "list_collections({0},{1})".format(credentials,envid)
-    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-    # print(r.text)
-    return "query_document({0},{1},{2})".format(credentials, envid, colid)
+        return r.text
 
 
 #===============================================================================
 # query_collection
 #===============================================================================
-def query_collection(credentials, envid, colid=None, query=None, count=10, raw=True):
+def query_collection(credentials, envid, colid=None, query=None, count=10):
     """
     Query a single document
     :param credentials: Watson credentials
@@ -961,7 +952,6 @@ def query_collection(credentials, envid, colid=None, query=None, count=10, raw=T
     :param colid: Watson collection_id string
     :param query: JSON string query
     :param count: Number of documents to list
-    :param raw: JSON output
     """
     if envid is None:
         print "Invalid envid, '{0}'".format(envid)
@@ -995,16 +985,7 @@ def query_collection(credentials, envid, colid=None, query=None, count=10, raw=T
 
         return None
     else:
-        if raw:
-            return r.text
-        else:
-            #environment = json.loads(r.text)
-            return yaml.safe_dump(json.loads(r.text), encoding='utf-8', allow_unicode=True, default_flow_style=False)
-
-    # return "list_collections({0},{1})".format(credentials,envid)
-    # print(json.dumps(r.text, sort_keys=True, indent=2, separators=(',', ': ')))
-    # print(r.text)
-    return "query_collection({0},{1},{2})".format(credentials, envid, colid)
+        return r.text
 
 
 #===============================================================================
@@ -1502,46 +1483,42 @@ if __name__ == "__main__":
 
         command = args.query.lower()
         if args.envid is not None:
-            try:
-                envid = envids[args.envid]
-                if command == 'collection':
-                    colids = get_collections_ids(credentials=credentials, envid=envid)
-                    if colids:
-                        colid = colids[args.colid]
-                        result = query_collection(credentials=credentials, envid=envid, colid=colid, count=args.count, raw=args.raw)
-                        unicode_safe_print(string=result)
-                        sys.exit(0)
-                    else:
-                        print "No collections found?"
-                        sys.exit(1)
-                elif command == 'document':
-                    colids = get_collections_ids(credentials=credentials, envid=envid)
-                    if colids:
-                        colid = colids[args.colid]
-                        docids = get_document_ids(credentials=credentials, envid=envid, colid=colid, count=args.count)
+            envid = envids[args.envid]
+            if command == 'collection':
+                colids = get_collections_ids(credentials=credentials, envid=envid)
+                if colids:
+                    colid = get_valid_id_string(args.colid, colids, strict=True)
+                    result = query_collection(credentials=credentials, envid=envid, colid=colid, count=args.count)
+                else:
+                    print "QUERY: {0}, No collections found?".format(command)
+                    sys.exit(1)
+            elif command == 'document':
+                colids = get_collections_ids(credentials=credentials, envid=envid)
+                if colids:
+                    colid = get_valid_id_string(args.colid, colids, strict=True)
+                    docids = get_document_ids(credentials=credentials, envid=envid, colid=colid, count=args.count)
 
-                        if docids:
-                            docid = docids[args.docid]
-                            result = query_document(credentials=credentials, envid=envid, colid=colid, docid=docid, raw=args.raw)
-                            unicode_safe_print(string=result)
-                            sys.exit(0)
-                        else:
-                            print "No documents found?"
-                            sys.exit(1)
+                    if docids:
+                        docid = get_valid_id_string(args.docid, docids, strict=True)
+                        result = query_document(credentials=credentials, envid=envid, colid=colid, docid=docid)
                     else:
-                        print "No collections found?"
+                        print "QUERY: {0}, No documents found?".format(command)
                         sys.exit(1)
+                else:
+                    print "QUERY: {0}, No collections found?".format(command)
+                    sys.exit(1)
 
-            except IndexError:
-                print "Query:"
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={0}; colid={1}; cfgid={2}".format(args.envid, args.colid, args.cfgid)
+            if result is None:
+                print "EnvID: {0}".format(envid)
+                print "Query {0} failed".format(command)
                 sys.exit(1)
-            except TypeError as e:
-                print "Query:"
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={1}; colid={2}; cfgid={3}; {0}".format(e, args.envid, args.colid, args.cfgid)
-                sys.exit(1)
+            elif output_format == 'TEXT':
+                print "EnvID: {0}".format(envid)
+                title = "Query {0} succeeded".format(command)
+                print title + os.linesep + ("=" * len(title))
+                print_result(result=result, format="YAML")
+            else:
+                print_result(result=result, format=output_format)
 
     else:
         print "Unknown command"
