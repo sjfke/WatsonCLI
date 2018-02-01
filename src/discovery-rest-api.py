@@ -710,7 +710,7 @@ def delete_environment(cred, envid):
 #===============================================================================
 # create_collection
 #===============================================================================
-def create_collection(credentials, envid, name, cfgid, description=None, language='en', raw=True):
+def create_collection(credentials, envid, name, cfgid, description=None, language='en'):
     '''
     Create Watson collection in the environment
     :param credentials: Watson Credentials (username, password, version)
@@ -718,7 +718,6 @@ def create_collection(credentials, envid, name, cfgid, description=None, languag
     :param cfgid: mandatory configuration_id string
     :param description: optional description
     :param language: defaults to 'en'
-    :param raw: True (JSON), False (YAML)
     '''
 
     # POST /v1/environments/{environment_id}/collections
@@ -753,11 +752,7 @@ def create_collection(credentials, envid, name, cfgid, description=None, languag
         if args.verbose >= 1:
             print "{0}: Create Collection succeeded".format(r.status_code)
 
-        if raw:
-            return r.text
-        else:
-            document = json.loads(r.text)
-            return yaml.safe_dump(document, encoding='utf-8', allow_unicode=True, default_flow_style=False)
+        return r.text
     else:
         if args.verbose >= 1:
             print "Create Collection Failed: {0}".format(r.status_code)
@@ -1441,23 +1436,30 @@ if __name__ == "__main__":
 
         command = args.create.lower()
         if args.envid is not None:
-            try:
-                envid = envids[args.envid]
-                if command == 'environment':
-                    create_environment(credentials=credentials, name=args.create, descr=args.description)
-                elif command == 'collection':
-                    cfgids = get_configuration_ids(credentials, envid)
-                    cfgid = cfgids[args.cfgid]
-                    result = create_collection(credentials=credentials, envid=envid, name=args.name, cfgid=cfgid, description=args.description, raw=args.raw)
-                    unicode_safe_print(string=result)
-            except IndexError:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={0}; cfgid={1}".format(args.envid, args.cfgid)
+            envid = envids[args.envid]
+            if command == 'environment':
+                result = create_environment(credentials=credentials, name=args.create, descr=args.description)
+            elif command == 'collection':
+                cfgids = get_configuration_ids(credentials, envid)
+                cfgid = get_valid_id_string(args.cfgid, cfgids, strict=True)
+                result = create_collection(credentials=credentials, envid=envid, name=args.name, cfgid=cfgid, description=args.description)
+            else:
+                print "Invalid {1} '{2}'; hint try {0} -h".format(sys.argv[0], 'create command', command)
+                print " envid={0}; name={1}; cfgid={2}".format(args.envid, args.name, args.cfgid)
                 sys.exit(1)
-            except TypeError as e:
-                print "Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={1}; cfgid={2}; {0}".format(e, args.envid, args.cfgid)
+
+            if result is None:
+                print "EnvID: {0}".format(envid)
+                print "Create {0} '{1}' failed".format(command, args.name)
                 sys.exit(1)
+            elif output_format == 'TEXT':
+                print "EnvID: {0}".format(envid)
+                title = "Create {0} '{1}' succeeded".format(command, args.name)
+                print title + os.linesep + ("=" * len(title))
+                print_result(result=result, format="YAML")
+            else:
+                print_result(result=result, format=output_format)
+
         else:
             print "Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0])
             sys.exit(1)
