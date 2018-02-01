@@ -588,13 +588,7 @@ def list_collection(credentials, envid, colid, raw=True):
 
         return None
     else:
-        if raw:
-            return r.text
-        else:
-            collection = json.loads(r.text)
-            return yaml.safe_dump(collection, encoding='utf-8', allow_unicode=True, default_flow_style=False)
-
-    return "Unknown Error: list_collecation({0})".format(envid)
+        return r.text
 
 
 #===============================================================================
@@ -1310,6 +1304,21 @@ def print_configuration(result, title="Configuration:"):
 
 
 #===============================================================================
+# print_collection
+#===============================================================================
+def print_collection(result, title="Configuration:"):
+    '''
+    Print the Configuration
+    :param result: Configurations text or object to print
+    :param title: Title string
+    '''
+    print title + os.linesep + ("=" * len(title))
+
+    # simple Wrapper YAML output
+    print_result(result=result, format='YAML')
+
+
+#===============================================================================
 # https://www.ibm.com/watson/developercloud/discovery/api/v1/
 # https://console.bluemix.net/docs/services/discovery/getting-started.html#getting-started-with-the-api
 # __main__
@@ -1436,20 +1445,16 @@ if __name__ == "__main__":
 
         elif command == 'collection':
             colids = get_collections_ids(credentials, envid)
-            try:
-                colid = colids[args.colid]
-                result = list_collection(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
-                title = "Collection: {0}".format(colid)
-                print title + os.linesep + ("=" * len(title))
-                unicode_safe_print(string=result)
-            except IndexError:
-                print "List Collection: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={0}; colid={1}".format(args.envid, args.colid)
-                sys.exit(1)
-            except TypeError as e:
-                print "List Collection: Invalid {1}; hint try {0} -L environments".format(sys.argv[0], 'index')
-                print " envid={1}; colid={2}; {0}".format(e, args.envid, args.colid)
-                sys.exit(1)
+            colid = get_valid_colid(args.colid, colids, strict=True)
+            result = list_collection(credentials=credentials, envid=envid, colid=colid, raw=args.raw)
+            if result is None:
+                print "EnvID: {0}".format(envid)
+                print "  No configurations found"
+            elif output_format == 'TEXT':
+                print "EnvID: {0}".format(envid)
+                print_result(result=result, callback=print_collection)
+            else:
+                print_result(result=result, format=output_format)
 
         elif command == 'document':
             colids = get_collections_ids(credentials, envid)
