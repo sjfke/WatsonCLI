@@ -94,11 +94,10 @@ def print_result(result, format='JSON', callback=None):
 
     return
 
+
 #===============================================================================
 # list_environments
 #===============================================================================
-
-
 def list_environments(credentials, raw=True):
     """
      Return Watson Discovery Environments
