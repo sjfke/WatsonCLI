@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #!/usr/bin/env python
 import sys
 import json
@@ -15,36 +14,10 @@ class WDSObject:
     '''
     Simplistic access to IBM Watson Discovery Service
     '''
-    #===============================================================================
-    # get_valid_id_string
-    #===============================================================================
-    def get_valid_id_string(index, id_list, strict=False):
-        '''
-        Return a valid collection_id string, trapping any list index errors
-        :param index: index
-        :param id_list: list of valid id_strings
-        :param strict: return None or exit if no match
-        '''
-        try:
-            return id_list[index]
-        except IndexError:
-            if strict:
-                logger.critical("get_valid_id_string: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0]))
-                logger.critical("  index={0}(>= {2}); id_list={1}".format(index, id_list, len(id_list)))
-                sys.exit(1)
-            else:
-                return None
-        except TypeError as e:
-            if strict:
-                logger.critical("get_valid_id_string: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0]))
-                logger.critical("  index={1}(>= {3}); id_list={2}".format(e, index, id_list, len(id_list)))
-                sys.exit(1)
-            else:
-                return None
-
     #===========================================================================
     # __init__
     #===========================================================================
+
     def __init__(self, filename):
         self.__username = None
         self.__password = None
@@ -125,19 +98,20 @@ class WDSObject:
     #===============================================================================
     # get_environments
     #===============================================================================
-    def get_environments(self):
+    def get_environments(self, raw=True):
         """
          Return Watson Discovery Environments
+        :param raw: unformatted JSON result
         """
-        api = self.__url + "/environments"
+        api = self.__url + '/v1/environments'
         payload = {}
         payload['version'] = self.__version
 
         r = requests.get(api, params=payload, auth=(self.__username, self.__password))
-        logger.debug("GET: {0}".format(r.url))
+        logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
-            logger.debug("List Collections Failed: {0}".format(r.status_code))
+            logging.debug("List Collections Failed: {0}".format(r.status_code))
             return None
         else:
             if raw:
@@ -163,20 +137,20 @@ class WDSObject:
         :param raw: unformatted JSON result
         """
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/configurations?version=2017-11-07"
-        api = self.__url + "/environments/" + envid + '/configurations'
+        api = self.__url + '/v1/environments/' + envid + '/configurations'
         payload = {}
         payload['version'] = self.__version
 
         r = requests.get(api, params=payload, auth=(self.__username, self.__password))
-        logger.debug("GET: {}".format(r.url))
+        logging.debug("GET: {}".format(r.url))
 
         if r.status_code != requests.codes.ok:
-            logger.debug("List Configurations Failed: {0}".format(r.status_code))
+            logging.debug("List Configurations Failed: {0}".format(r.status_code))
             return None
         else:
             if raw:
@@ -201,11 +175,11 @@ class WDSObject:
         :param envid: Watson environment_id string
         """
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         id_list = []
-        configuration = json.loads(self.configurations(envid=envid))
+        configuration = json.loads(self.get_configurations(envid=envid))
         for c in configuration['configurations']:
             id_list.append(c['configuration_id'])
 
@@ -221,21 +195,21 @@ class WDSObject:
         :param raw: JSON output
         """
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         # https://www.ibm.com/watson/developercloud/discovery/api/v1/?curl#create-collection
         # curl -u "{username}":"{password}" \
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections?version=2017-11-07"
-        api = self.__url + "/environments/" + envid + '/collections'
+        api = self.__url + '/v1/environments/' + envid + '/collections'
         payload = {}
         payload['version'] = self.__version
 
         r = requests.get(api, params=payload, auth=(self.__username, self.__password))
-        logger.debug("GET: {0}".format(r.url))
+        logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
-            logger.error("List Collections Failed: {0}".format(r.status_code))
+            logging.error("List Collections Failed: {0}".format(r.status_code))
             return None
         else:
             if raw:
@@ -260,7 +234,7 @@ class WDSObject:
         :param envid: Watson environment_id string
         """
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         id_list = []
@@ -281,11 +255,11 @@ class WDSObject:
         :param count: Number of documents to list
         """
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         if colid is None:
-            logger.critical("Missing collection_id; hint {0} -L configurations --envid {1}".format(sys.argv[0], envid))
+            logging.critical("Missing collection_id; hint {0} -L configurations --envid {1}".format(sys.argv[0], envid))
             return None
 
         # GET /v1/environments/{environment_id}/collections/{collection_id}/documents
@@ -293,17 +267,17 @@ class WDSObject:
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/query?return=extracted_metadata&version=2017-11-07"
 
-        api = self.__url + "/environments/" + envid + '/collections/' + colid + '/query'
+        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid + '/query'
         payload = {}
         payload['return'] = 'extracted_metadata'
         payload['count'] = count
         payload['version'] = self.__version
 
         r = requests.get(api, params=payload, auth=(self.__username, self.__password))
-        logger.debug("list_documents: GET: {0}".format(r.url))
+        logging.debug("list_documents: GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
-            logger.error("List Documents Failed: {0}".format(r.status_code))
+            logging.error("List Documents Failed: {0}".format(r.status_code))
             return None
         else:
             return r.text
@@ -319,11 +293,11 @@ class WDSObject:
         :param count: Number of documents to list
         """
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         if colid is None:
-            logger.critical("Invalid colid, '{0}'".format(colid))
+            logging.critical("Invalid colid, '{0}'".format(colid))
             return None
 
         # {"matching_results":36,"results":[
@@ -345,7 +319,7 @@ class WDSObject:
         if documents is not None:
             document = json.loads(documents)
             if documents["matching_results"] > count:
-                logger.warning("Only {0} out of {1} document ids returned".format(count, documents["matching_results"]))
+                logging.warning("Only {0} out of {1} document ids returned".format(count, documents["matching_results"]))
 
             for d in document['results']:
                 id_list.append(d['id'])
@@ -366,32 +340,32 @@ class WDSObject:
         :param docid: document_id string
         '''
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         if colid is None:
-            logger.critical("Invalid colid, '{0}'".format(colid))
+            logging.critical("Invalid colid, '{0}'".format(colid))
             return None
 
         if docid is None:
-            logger.critical("Invalid docid, '{0}'".format(docid))
+            logging.critical("Invalid docid, '{0}'".format(docid))
             return None
 
         # DELETE /v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}
         # curl -X DELETE -u "{username}":"{password}"
         #  "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}?version=2017-11-07"
 
-        api = self.__url + "/environments/" + envid + '/collections/' + colid + '/documents/' + docid
+        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid + '/documents/' + docid
         payload = {}
         payload['version'] = self.__version
 
         r = requests.delete(api, params=payload, auth=(self.__username, self.__password))
-        logger.debug("DELETE: {0}".format(r.url))
+        logging.debug("DELETE: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
             if args.verbose >= 1:
-                logger.error("Delete_document({0},{1},{2},{3})".format('****', envid, colid, docid))
-                logger.error("Delete document Failed: {0} ".format(r.status_code))
+                logging.error("Delete_document({0},{1},{2},{3})".format('****', envid, colid, docid))
+                logging.error("Delete document Failed: {0} ".format(r.status_code))
 
             return None
         else:
@@ -408,21 +382,21 @@ class WDSObject:
         """
 
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         # GET /v1/environments/{environment_id}
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}?version=2017-11-07"
-        api = self.__url + '/environments/' + envid
+        api = self.__url + '/v1/environments/' + envid
         payload = {}
         payload['version'] = self.__version
 
         r = requests.get(api, params=payload, auth=(self.__username, self.__password))
-        logger.debug("GET: {0}".format(r.url))
+        logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
-            logger.error("List environment Failed: {0}".format(r.status_code))
+            logging.error("List environment Failed: {0}".format(r.status_code))
             return None
         else:
             return r.text
@@ -437,25 +411,25 @@ class WDSObject:
         :param cfgid: Watson configuration_id string
         """
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         if cfgid is None:
-            logger.critical("Invalid cfgid, '{0}'".format(cfgid))
+            logging.critical("Invalid cfgid, '{0}'".format(cfgid))
             return None
 
         # GET /v1/environments/{environment_id}/configurations/{configuration_id}
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/configurations/{configuration_id}?version=2017-11-07"
-        api = self.__url + '/environments/' + envid + '/configurations/' + cfgid
+        api = self.__url + '/v1/environments/' + envid + '/configurations/' + cfgid
         payload = {}
         payload['version'] = self.__version
 
         r = requests.get(api, params=payload, auth=(self.__username, self.__password))
-        logger.debug("GET: {0}".format(r.url))
+        logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
-            logger.error("List configuration Failed: {0}".format(r.status_code))
+            logging.error("List configuration Failed: {0}".format(r.status_code))
             return None
         else:
             return r.text
@@ -470,25 +444,25 @@ class WDSObject:
         :param colid: Watson collection_id string
         """
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         if colid is None:
-            logger.critical("Invalid colid, '{0}'".format(colid))
+            logging.critical("Invalid colid, '{0}'".format(colid))
             return None
 
         # GET /v1/environments/{environment_id}/collections/{collection_id}
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}?version=2017-11-07"
-        api = self.__url + '/environments/' + envid + '/collections/' + colid
+        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid
         payload = {}
         payload['version'] = self.__version
 
         r = requests.get(api, params=payload, auth=(self.__username, self.__password))
-        logger.debug("GET: {0}".format(r.url))
+        logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
-            logger.error("List collection Failed: {0}".format(r.status_code))
+            logging.error("List collection Failed: {0}".format(r.status_code))
             return None
         else:
             return r.text
@@ -504,29 +478,29 @@ class WDSObject:
         :param docid: Watson document_id string
         """
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         if colid is None:
-            logger.critical("Invalid colid, '{0}'".format(colid))
+            logging.critical("Invalid colid, '{0}'".format(colid))
             return None
 
         if docid is None:
-            logger.critical("Invalid docid, '{0}'".format(docid))
+            logging.critical("Invalid docid, '{0}'".format(docid))
             return None
 
         # GET /v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}?version=2017-11-07"
-        api = self.__url + '/environments/' + envid + '/collections/' + colid + '/documents/' + docid
+        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid + '/documents/' + docid
         payload = {}
         payload['version'] = self.__version
 
         r = requests.get(api, params=payload, auth=(self.__username, self.__password))
-        logger.debug("GET: {0}".format(r.url))
+        logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
-            logger.error("List document Failed: {0}".format(r.status_code))
+            logging.error("List document Failed: {0}".format(r.status_code))
             return None
         else:
             return r.text
@@ -557,22 +531,22 @@ class WDSObject:
         :param name: mandatory environment name
         :param descr: optional environment description
         """
-        api = self.__url + '/environments/' + '?version=' + self.__version
+        api = self.__url + '/v1/environments/' + '?version=' + self.__version
 
         if name is None:
-            logger.critical("Environment needs a name, {0}".format(name))
+            logging.critical("Environment needs a name, {0}".format(name))
             return None
 
         data = {'name': name, 'description': descr}
         r = requests.post(api, json=data, auth=(self.__username, sel.__password))
 
-        logger.debug("POST: {0}".format(r.url))
-        logger.debug("JSON: {0}".format(data))
+        logging.debug("POST: {0}".format(r.url))
+        logging.debug("JSON: {0}".format(data))
 
         if r.status_code == requests.codes.ok or r.status_code == requests.codes.created:
             return r.text
         else:
-            logger.critical("Create Environment Failed: {0}".format(r.status_code))
+            logging.critical("Create Environment Failed: {0}".format(r.status_code))
             return None
 
     #===============================================================================
@@ -584,22 +558,22 @@ class WDSObject:
         :param envid: mandatory environment_id string
         """
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
-        api = self.__url + '/environments/' + envid
+        api = self.__url + '/v1/environments/' + envid
         payload = {}
         payload['version'] = self.__version
 
         r = requests.delete(api, params=payload, auth=(self.__username, self.__password))
-        logger.debug("DELETE: {0}".format(r.url))
+        logging.debug("DELETE: {0}".format(r.url))
 
         return r.text
 
     #===============================================================================
     # create_collection
     #===============================================================================
-    def create_collection(envid, name, cfgid, description=None, language='en'):
+    def create_collection(self, envid, name, cfgid, description=None, language='en'):
         '''
         Create Watson collection in the environment
         :param envid: mandatory environment_id string
@@ -608,11 +582,11 @@ class WDSObject:
         :param language: defaults to 'en'
         '''
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         if name is None:
-            logger.critical("Environment needs a name, {0}".format(name))
+            logging.critical("Environment needs a name, {0}".format(name))
             return None
 
         # POST /v1/environments/{environment_id}/collections
@@ -632,20 +606,20 @@ class WDSObject:
         #   "language": "en"
         # }
 
-        api = self.__url + '/environments/' + envid + '/collections'
+        api = self.__url + '/v1/environments/' + envid + '/collections'
         api += '?version=' + self.__version
 
         data = {'name': name, 'description': description, 'configuration_id': cfgid, 'language': language}
         r = requests.post(api, json=data, auth=(self.__username, self.__password))
 
-        logger.debug("POST: {0}".format(r.url))
-        logger.debug("DATA: {0}".format(data))
+        logging.debug("POST: {0}".format(r.url))
+        logging.debug("DATA: {0}".format(data))
 
         if r.status_code == requests.codes.ok or r.status_code == requests.codes.created:
-            logger.debug("{0}: Create Collection succeeded".format(r.status_code))
+            logging.debug("{0}: Create Collection succeeded".format(r.status_code))
             return r.text
         else:
-            logger.error("Create Collection Failed: {0}".format(r.status_code))
+            logging.error("Create Collection Failed: {0}".format(r.status_code))
             return None
 
     #===============================================================================
@@ -658,92 +632,91 @@ class WDSObject:
         :param colid: mandatory collection_id string
         '''
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         if colid is None:
-            logger.critical("Invalid colid, '{0}'".format(colid))
+            logging.critical("Invalid colid, '{0}'".format(colid))
             return None
 
         # DELETE /v1/environments/{environment_id}/collections/{collection_id}
         # curl -u "{username}":"{password}" -X DELETE
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}?version=2017-11-07"
-        api = self.__url + '/environments/' + envid + '/collections/' + colid
+        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid
         payload = {}
         payload['version'] = self.__version
 
         r = requests.delete(api, params=payload, auth=(credentials['username'], credentials['password']))
-        logger.debug("DELETE {0}".format(r.url))
+        logging.debug("DELETE {0}".format(r.url))
         return r.text
 
+    #===============================================================================
+    # upload_document
+    #===============================================================================
+    def upload_document(self, envid, colid, file_name):
+        '''
+        Upload a document into a collection in the environment
+        :param envid: mandatory environment_id string
+        :param colid: mandatory collection_id string
+        :param file_name: file to upload
+        '''
+        import magic
 
-#===============================================================================
-# upload_document
-#===============================================================================
-def upload_document(self, envid, colid, file_name):
-    '''
-    Upload a document into a collection in the environment
-    :param envid: mandatory environment_id string
-    :param colid: mandatory collection_id string
-    :param file_name: file to upload
-    '''
-    import magic
+        if envid is None:
+            logging.critical("Invalid envid, '{0}'".format(envid))
+            return None
 
-    if envid is None:
-        logger.critical("Invalid envid, '{0}'".format(envid))
-        return None
+        if colid is None:
+            logging.critical("Invalid colid, '{0}',; envid '{1}'".format(colid, envid))
+            return None
 
-    if colid is None:
-        logger.critical("Invalid colid, '{0}',; envid '{1}'".format(colid, envid))
-        return None
+        if not (os.path.isfile(file_name) and os.access(file_name, os.R_OK)):
+            logging.critical("Filename not readable, '{0}'".format(file_name))
+            return None
 
-    if not (os.path.isfile(file_name) and os.access(file_name, os.R_OK)):
-        logger.critical("Filename not readable, '{0}'".format(file_name))
-        return None
+        # POST /v1/environments/{environment_id}/collections/{collection_id}/documents
+        # curl -X POST -u "{username}":"{password}" \
+        # -F file=@sample1.html
+        # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
+        logging.debug("upload: envid={0}; colid={1}; fname={2}".format(envid, colid, file_name))
 
-    # POST /v1/environments/{environment_id}/collections/{collection_id}/documents
-    # curl -X POST -u "{username}":"{password}" \
-    # -F file=@sample1.html
-    # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
-    logger.debug("upload: envid={0}; colid={1}; fname={2}".format(envid, colid, file_name))
+        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid + '/documents'
+        api += '?version=' + self.__version
 
-    api = self.__url + '/environments/' + envid + '/collections/' + colid + '/documents'
-    api += '?version=' + self.__version
+        # Supported formats (50 MB max).
+        # application/json,
+        # application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document,
+        # application/pdf,
+        # text/html, and application/xhtml+xml
+        #
+        # magic.from_file("../examples/file.txt", mime=True) >>> 'text/plain'
+        # magic.from_file("../examples/LinkedIn_Ella_Salzmann.pdf", mime=True) >>> 'application/pdf'
+        # magic.from_file("../examples/parameters.json", mime=True) >>>'text/plain'
+        # magic.from_file("../examples/missing-file.txt", mime=True)
+        #   IOError: [Errno 2] No such file or directory: '../examples/missing-file.txt'
+        mime_type = magic.from_file(file_name, mime=True)
+        if mime_type == 'text/html':
+            try:
+                json.loads(file_name)
+                mime_type = "application/json"
+            except ValueError:
+                pass
 
-    # Supported formats (50 MB max).
-    # application/json,
-    # application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document,
-    # application/pdf,
-    # text/html, and application/xhtml+xml
-    #
-    # magic.from_file("../examples/file.txt", mime=True) >>> 'text/plain'
-    # magic.from_file("../examples/LinkedIn_Ella_Salzmann.pdf", mime=True) >>> 'application/pdf'
-    # magic.from_file("../examples/parameters.json", mime=True) >>>'text/plain'
-    # magic.from_file("../examples/missing-file.txt", mime=True)
-    #   IOError: [Errno 2] No such file or directory: '../examples/missing-file.txt'
-    mime_type = magic.from_file(file_name, mime=True)
-    if mime_type == 'text/html':
-        try:
-            json.loads(file_name)
-            mime_type = "application/json"
-        except ValueError:
-            pass
+        files = {'file': (os.path.basename(file_name), open(file_name, 'rb'), mime_type, {'Expires': 0})}
+        r = requests.post(api, files=files, auth=(credentials['username'], credentials['password']))
 
-    files = {'file': (os.path.basename(file_name), open(file_name, 'rb'), mime_type, {'Expires': 0})}
-    r = requests.post(api, files=files, auth=(credentials['username'], credentials['password']))
+        logging.debug("POST: {0}".format(r.url))
+        logging.debug("FILE: {0}".format(file_name))
 
-    logger.debug("POST: {0}".format(r.url))
-    logger.debug("FILE: {0}".format(file_name))
-
-    # 200 OK - Successful request
-    # 202 Accepted - index progressing.
-    # 400 Bad Request - Invalid request if the request is incorrectly formatted.
-    # 404 Not Found - The request specified a resource that was not found
-    if r.status_code == requests.codes.ok or r.status_code == requests.codes.accepted:
-        return r.text
-    else:
-        logger.error("Upload File Failed: {0}".format(r.status_code))
-        return None
+        # 200 OK - Successful request
+        # 202 Accepted - index progressing.
+        # 400 Bad Request - Invalid request if the request is incorrectly formatted.
+        # 404 Not Found - The request specified a resource that was not found
+        if r.status_code == requests.codes.ok or r.status_code == requests.codes.accepted:
+            return r.text
+        else:
+            logging.error("Upload File Failed: {0}".format(r.status_code))
+            return None
 
     #===============================================================================
     # query_document
@@ -759,22 +732,22 @@ def upload_document(self, envid, colid, file_name):
         :param count: Number of documents to list
         """
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         if colid is None:
-            logger.critical("Invalid colid, '{0}'".format(colid))
+            logging.critical("Invalid colid, '{0}'".format(colid))
             return None
 
         if docid is None:
-            logger.critical("Invalid docid, '{0}'".format(docid))
+            logging.critical("Invalid docid, '{0}'".format(docid))
             return None
 
         # GET /v1/environments/{environment_id}/collections/{collection_id}/documents
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/query?return=extracted_metadata&version=2017-11-07"
-        api = self.__url + '/environments/' + envid + '/collections/' + colid + '/query'
+        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid + '/query'
         payload = {}
         payload['filter'] = '_id:"' + docid + '"'
         if filtered:
@@ -783,10 +756,10 @@ def upload_document(self, envid, colid, file_name):
         payload['version'] = self.__version
 
         r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
-        logger.debug("GET: {0}".format(r.url))
+        logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
-            logger.error("Query Document Failed: {0}".format(r.status_code))
+            logging.error("Query Document Failed: {0}".format(r.status_code))
             return None
         else:
             return r.text
@@ -803,18 +776,18 @@ def upload_document(self, envid, colid, file_name):
         :param count: Number of documents to list
         """
         if envid is None:
-            logger.critical("Invalid envid, '{0}'".format(envid))
+            logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
         if colid is None:
-            logger.critical("Invalid colid, '{0}'".format(colid))
+            logging.critical("Invalid colid, '{0}'".format(colid))
             return None
 
         # GET /v1/environments/{environment_id}/collections/{collection_id}/documents
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/query?return=extracted_metadata&version=2017-11-07"
-        api = self.__url + '/environments/' + envid + '/collections/' + colid + '/query'
+        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid + '/query'
         payload = {}
         payload['filter'] = 'enriched_text.entities.type::"Company"'
         payload['return'] = 'enriched_text.concepts,enriched_text.keywords,enriched_text.entities,enriched_text.categories'
@@ -822,12 +795,38 @@ def upload_document(self, envid, colid, file_name):
         payload['version'] = self.__version
 
         r = requests.get(api, params=payload, auth=(self.__username, self.__password))
-        logger.debug("GET: {0}".format(r.url))
+        logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
-            logger.error("Query Collection Failed: {0}".format(r.status_code))
+            logging.error("Query Collection Failed: {0}".format(r.status_code))
             return None
         else:
             return r.text
-=======
->>>>>>> refs/remotes/eclipse_auto/master
+
+    #===============================================================================
+    # get_valid_id_string
+    #===============================================================================
+    @staticmethod
+    def get_valid_id_string(index, id_list, strict=False):
+        '''
+        Return a valid collection_id string, trapping any list index errors
+        :param index: index
+        :param id_list: list of valid id_strings
+        :param strict: return None or exit if no match
+        '''
+        try:
+            return id_list[index]
+        except IndexError:
+            if strict:
+                logging.critical("get_valid_id_string: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0]))
+                logging.critical("  index={0}(>= {2}); id_list={1}".format(index, id_list, len(id_list)))
+                sys.exit(1)
+            else:
+                return None
+        except TypeError as e:
+            if strict:
+                logging.critical("get_valid_id_string: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0]))
+                logging.critical("  index={1}(>= {3}); id_list={2}".format(e, index, id_list, len(id_list)))
+                sys.exit(1)
+            else:
+                return None
