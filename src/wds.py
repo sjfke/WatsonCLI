@@ -312,7 +312,7 @@ def print_document(result, title="Document:"):
 if __name__ == "__main__":
     wds_cfg_file = os.path.join(os.getcwd(), '.watson.cfg')
 
-    parser = argparse.ArgumentParser(description='Discovery REST interface')
+    parser = argparse.ArgumentParser(description='WDS Simplistic CLI interface')
     parser.add_argument('-A', '--add', help='upload document')
     parser.add_argument('-C', '--create', help='(environment|collection)')
     parser.add_argument('-D', '--delete', help='(environment|configuration|collection|document)')
@@ -330,7 +330,6 @@ if __name__ == "__main__":
     parser.add_argument('--raw', help='JSON output', default=False, action='store_true')
     parser.add_argument('-j', '--json', help='JSON output', default=False, action='store_true')
     parser.add_argument('-y', '--yaml', help='YAML output', default=False, action='store_true')
-    parser.add_argument('-s', '--separator', help='field delimiter', default='\n  ')
     parser.add_argument('-v', '--verbose', action='count', default=0)
     args = parser.parse_args()
 
@@ -407,8 +406,8 @@ if __name__ == "__main__":
             result = wds.get_documents(envid=envid, colid=colid, count=args.count)
 
             if result is None:
-                print "{1}Collection: '{0}'".format(colid, args.separator),
-                print "{0}No documents found".format(args.separator),
+                print "Collection: '{0}'".format(colid),
+                print "  No documents found".format(),
                 print
             elif output_format == 'TEXT':
                 print "EnvID: {0}".format(envid)
