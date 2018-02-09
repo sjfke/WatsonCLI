@@ -11,43 +11,11 @@ import yaml
 
 from WDSObject import WDSObject
 
-# # http://pythonhosted.org/kitchen/unicode-frustrations.html
-# from _bsddb import api
-# UTF8Writer = codecs.getwriter('utf8')
-
-
-#===============================================================================
-# unicode_safe_print
-#===============================================================================
-def unicode_safe_print(string):
-    '''
-    Safely print a string which may be UTF-8 or ASCII
-    :param string:
-    '''
-    print(string)
-
-# def python2_unicode_safe_print(string):
-#     '''
-#     Safely print a string which may be UTF-8 or ASCII
-#     :param string:
-#     '''
-#     from _bsddb import api
-#
-#     UTF8Writer = codecs.getwriter('utf8')
-#     # http://pythonhosted.org/kitchen/unicode-frustrations.html
-#     # https://stackoverflow.com/questions/21129020/how-to-fix-unicodedecodeerror-ascii-codec-cant-decode-byte
-#     if isinstance(string, str):
-#         print(string)
-#     elif isinstance(string, unicode):
-#         sys.stdout = UTF8Writer(sys.stdout)
-#         print(string)
-#     else:
-#         print(string)
-
-
 #===============================================================================
 # print_result
 #===============================================================================
+
+
 def print_result(result, format='JSON', callback=None):
     '''
     Print result (string, list) in JSON, YAML or TEXT (callback) format
@@ -60,7 +28,8 @@ def print_result(result, format='JSON', callback=None):
             print("print_result: 'string' is None")
         return
 
-    if isinstance(result, str) or isinstance(result, unicode):
+    # TODO: This is overly complex and needs to be redone, values needs to be a sane JSON string thats all.
+    if isinstance(result, str):
         values = json.dumps(json.loads(result), sort_keys=True, indent=4, separators=(',', ': '))
     else:
         values = json.dumps(result, sort_keys=True, indent=4, separators=(',', ': '))
@@ -68,11 +37,11 @@ def print_result(result, format='JSON', callback=None):
     if callback:
         callback(result)
     elif format == 'JSON':
-        unicode_safe_print(values)
+        print(values)
     elif format == 'YAML':
-        unicode_safe_print(yaml.safe_dump(json.loads(values), encoding='utf-8', allow_unicode=True, default_flow_style=False))
+        print(yaml.safe_dump(json.loads(values), default_flow_style=False))
     else:
-        unicode_safe_print(values)
+        print(values)
 
     return
 
@@ -90,7 +59,7 @@ def print_environments_list(result, title="Environments:"):
     print(title + os.linesep + ("=" * len(title)))
 
     values = result
-    if isinstance(result, str) or isinstance(result, unicode):
+    if isinstance(result, str):
         values = json.loads(result)
 
     for i, val in enumerate(values["environments"]):
@@ -128,7 +97,7 @@ def print_configurations_list(result, title="Configurations:"):
     print(title + os.linesep + ("=" * len(title)))
 
     values = result
-    if isinstance(result, str) or isinstance(result, unicode):
+    if isinstance(result, str):
         values = json.loads(result)
 
     for i, val in enumerate(values):
@@ -165,7 +134,7 @@ def print_collections_list(result, title="Collections:"):
     print(title + os.linesep + ("=" * len(title)))
 
     values = result
-    if isinstance(result, str) or isinstance(result, unicode):
+    if isinstance(result, str):
         values = json.loads(result)
 
     for i, val in enumerate(values):
