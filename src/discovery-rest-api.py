@@ -10,10 +10,6 @@ import json
 import yaml
 import requests
 
-# http://pythonhosted.org/kitchen/unicode-frustrations.html
-from _bsddb import api
-UTF8Writer = codecs.getwriter('utf8')
-
 #===============================================================================
 # get_watson_credentials
 #===============================================================================
@@ -29,7 +25,7 @@ def get_watson_credentials(filename):
         print("Error: reading Watson credentials file '{0}: ".format(filename))
         sys.exit(1)
 
-    from ConfigParser import SafeConfigParser
+    from configparser import SafeConfigParser
 
     config = SafeConfigParser()
     config.read(filename)
@@ -39,28 +35,6 @@ def get_watson_credentials(filename):
     result['version'] = config.get('discovery', 'version')
 
     return result
-
-
-#===============================================================================
-# unicode_safe_print
-#===============================================================================
-def unicode_safe_print(string):
-    '''
-    Safely print a string which may be UTF-8 or ASCII
-    :param string:
-    '''
-    from _bsddb import api
-
-    UTF8Writer = codecs.getwriter('utf8')
-    # http://pythonhosted.org/kitchen/unicode-frustrations.html
-    # https://stackoverflow.com/questions/21129020/how-to-fix-unicodedecodeerror-ascii-codec-cant-decode-byte
-    if isinstance(string, str):
-        print(string)
-    elif isinstance(string, unicode):
-        sys.stdout = UTF8Writer(sys.stdout)
-        print(string)
-    else:
-        print(string)
 
 
 #===============================================================================
@@ -86,11 +60,11 @@ def print_result(result, format='JSON', callback=None):
     if callback:
         callback(result)
     elif format == 'JSON':
-        unicode_safe_print(values)
+        print(values)
     elif format == 'YAML':
-        unicode_safe_print(yaml.safe_dump(json.loads(values), encoding='utf-8', allow_unicode=True, default_flow_style=False))
+        print(yaml.safe_dump(json.loads(values), default_flow_style=False))
     else:
-        unicode_safe_print(values)
+        print(values)
 
     return
 
