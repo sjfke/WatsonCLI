@@ -8,14 +8,11 @@ import re
 import sys
 import json
 
-# http://pythonhosted.org/kitchen/unicode-frustrations.html
-UTF8Writer = codecs.getwriter('utf8')
-sys.stdout = UTF8Writer(sys.stdout)
-
-
 #===============================================================================
 # extract_data
 #===============================================================================
+
+
 def extract_data(src):
     '''
     Extract data from discovery JSON
