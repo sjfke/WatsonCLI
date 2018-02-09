@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 import argparse
@@ -26,7 +26,7 @@ def get_watson_credentials(filename):
     '''
 
     if not os.access(filename, os.R_OK):
-        print "Error: reading Watson credentials file '{0}: ".format(filename)
+        print("Error: reading Watson credentials file '{0}: ".format(filename))
         sys.exit(1)
 
     from ConfigParser import SafeConfigParser
@@ -55,12 +55,12 @@ def unicode_safe_print(string):
     # http://pythonhosted.org/kitchen/unicode-frustrations.html
     # https://stackoverflow.com/questions/21129020/how-to-fix-unicodedecodeerror-ascii-codec-cant-decode-byte
     if isinstance(string, str):
-        print string
+        print(string)
     elif isinstance(string, unicode):
         sys.stdout = UTF8Writer(sys.stdout)
-        print string
+        print(string)
     else:
-        print string
+        print(string)
 
 
 #===============================================================================
@@ -75,7 +75,7 @@ def print_result(result, format='JSON', callback=None):
     '''
     if result is None:
         if verbose >= 1:
-            print ("print_result: 'string' is None")
+            print("print_result: 'string' is None")
         return
 
     if isinstance(result, str) or isinstance(result, unicode):
@@ -111,7 +111,7 @@ def list_environments(credentials, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print "GET: {0}".format(r.url)
+        print("GET: {0}".format(r.url))
 
 #     {
 #       "environments" : [ {
@@ -130,7 +130,7 @@ def list_environments(credentials, raw=True):
 #     }
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
-            print "List Collections Failed: {0}".format(r.status_code)
+            print("List Collections Failed: {0}".format(r.status_code))
         return None
     else:
         if raw:
@@ -158,7 +158,7 @@ def list_configurations(credentials, envid, raw=True):
     :param raw:JSON results
     """
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     # curl -u "{username}":"{password}"
@@ -170,7 +170,7 @@ def list_configurations(credentials, envid, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print "GET: {}".format(r.url)
+        print("GET: {}".format(r.url))
 
 #     {
 #       "collections" : [ {
@@ -186,7 +186,7 @@ def list_configurations(credentials, envid, raw=True):
 #     }
 
     if r.status_code != requests.codes.ok:
-        print "List Configurations Failed: {0}".format(r.status_code)
+        print("List Configurations Failed: {0}".format(r.status_code))
         return None
     else:
         if raw:
@@ -213,7 +213,7 @@ def get_configuration_ids(credentials, envid):
     :param envid: Watson environment_id string
     """
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     configuration_ids = []
@@ -235,7 +235,7 @@ def list_collections(credentials, envid, raw=True):
     :param raw: JSON output
     """
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     # https://www.ibm.com/watson/developercloud/discovery/api/v1/?curl#create-collection
@@ -249,10 +249,10 @@ def list_collections(credentials, envid, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print "GET: {0}".format(r.url)
+        print("GET: {0}".format(r.url))
 
     if r.status_code != requests.codes.ok:
-        print "List Collections Failed: {0}".format(r.status_code)
+        print("List Collections Failed: {0}".format(r.status_code))
         return None
     else:
         if raw:
@@ -279,7 +279,7 @@ def get_collections_ids(credentials, envid):
     :param envid: Watson environment_id string
     """
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     collection_ids = []
@@ -303,11 +303,11 @@ def list_documents(credentials, envid, colid=None, count=10, raw=True):
     :param raw: JSON output
     """
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     if colid is None:
-        print "Missing collection_id; hint {0} -L configurations --envid {1}".format(sys.argv[0], envid)
+        print("Missing collection_id; hint {0} -L configurations --envid {1}".format(sys.argv[0], envid))
         sys.exit(1)
 
     # GET /v1/environments/{environment_id}/collections/{collection_id}/documents
@@ -325,11 +325,11 @@ def list_documents(credentials, envid, colid=None, count=10, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print "list_documents: GET: {0}".format(r.url)
+        print("list_documents: GET: {0}".format(r.url))
 
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
-            print "List Documents Failed: {0}".format(r.status_code)
+            print("List Documents Failed: {0}".format(r.status_code))
 
         return None
     else:
@@ -359,11 +359,11 @@ def get_document_ids(credentials, envid, colid, count=10):
     :param count: Number of documents to list
     """
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     if colid is None:
-        print "Invalid colid, '{0}'".format(colid)
+        print("Invalid colid, '{0}'".format(colid))
         sys.exit(1)
 
     # {"matching_results":36,"results":[
@@ -399,15 +399,15 @@ def delete_document(credentials, envid, colid, docid):
     :param docid: document_id string
     '''
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     if colid is None:
-        print "Invalid colid, '{0}'".format(colid)
+        print("Invalid colid, '{0}'".format(colid))
         sys.exit(1)
 
     if docid is None:
-        print "Invalid docid, '{0}'".format(docid)
+        print("Invalid docid, '{0}'".format(docid))
         sys.exit(1)
 
     # DELETE /v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}
@@ -421,12 +421,12 @@ def delete_document(credentials, envid, colid, docid):
 
     r = requests.delete(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print "DELETE: {0}".format(r.url)
+        print("DELETE: {0}".format(r.url))
 
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
-            print "Delete_document({0},{1},{2},{3})".format('****', envid, colid, docid)
-            print "Delete document Failed: {0} ".format(r.status_code)
+            print("Delete_document({0},{1},{2},{3})".format('****', envid, colid, docid))
+            print("Delete document Failed: {0} ".format(r.status_code))
 
         return None
     else:
@@ -447,7 +447,7 @@ def list_environment(credentials, envid):
     """
 
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
 #     GET /v1/environments/{environment_id}
@@ -461,11 +461,11 @@ def list_environment(credentials, envid):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print "GET: {0}".format(r.url)
+        print("GET: {0}".format(r.url))
 
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
-            print "List environment Failed: {0}".format(r.status_code)
+            print("List environment Failed: {0}".format(r.status_code))
 
         return None
     else:
@@ -485,11 +485,11 @@ def list_configuration(credentials, envid, cfgid, raw=True):
     """
 
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     if cfgid is None:
-        print "Invalid cfgid, '{0}', hint try: {1} -L configurations --envid {2}".format(cfgid, sys.argv[0], envid)
+        print("Invalid cfgid, '{0}', hint try: {1} -L configurations --envid {2}".format(cfgid, sys.argv[0], envid))
         sys.exit(1)
 
 #     GET /v1/environments/{environment_id}/configurations/{configuration_id}
@@ -503,11 +503,11 @@ def list_configuration(credentials, envid, cfgid, raw=True):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print "GET: {0}".format(r.url)
+        print("GET: {0}".format(r.url))
 
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
-            print "List configuration Failed: {0}".format(r.status_code)
+            print("List configuration Failed: {0}".format(r.status_code))
 
         return None
     else:
@@ -525,11 +525,11 @@ def list_collection(credentials, envid, colid):
     :param colid: Watson collection_id string
     """
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     if colid is None:
-        print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], envid)
+        print("Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], envid))
         sys.exit(1)
 
 #     GET /v1/environments/{environment_id}/collections/{collection_id}
@@ -543,11 +543,11 @@ def list_collection(credentials, envid, colid):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print "GET: {0}".format(r.url)
+        print("GET: {0}".format(r.url))
 
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
-            print "List collection Failed: {0}".format(r.status_code)
+            print("List collection Failed: {0}".format(r.status_code))
 
         return None
     else:
@@ -566,11 +566,11 @@ def list_document(credentials, envid, colid, docid):
     :param docid: Watson document_id string
     """
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     if colid is None:
-        print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], '<envid>')
+        print("Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], '<envid>'))
         sys.exit(1)
 
 #     GET /v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}
@@ -584,11 +584,11 @@ def list_document(credentials, envid, colid, docid):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print "GET: {0}".format(r.url)
+        print("GET: {0}".format(r.url))
 
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
-            print "List document Failed: {0}".format(r.status_code)
+            print("List document Failed: {0}".format(r.status_code))
 
         return None
     else:
@@ -636,7 +636,7 @@ def get_environment_summary(cred, envid):
 
     r = requests.get(api, params=payload, auth=(cred['username'], cred['password']))
     if args.verbose >= 1:
-        print "GET: {0}".format(r.url)
+        print("GET: {0}".format(r.url))
 
     return r.text
 
@@ -661,13 +661,13 @@ def create_environment(cred, name, descr):
     r = requests.post(api, json=data, auth=(cred['username'], cred['password']))
 
     if args.verbose >= 1:
-        print "POST: {0}".format(r.url)
-        print "JSON: {0}".format(data)
+        print("POST: {0}".format(r.url))
+        print("JSON: {0}".format(data))
 
     if r.status_code == requests.codes.ok or r.status_code == requests.codes.created:
         return r.text
     else:
-        print "Create Environment Failed: {0}".format(r.status_code)
+        print("Create Environment Failed: {0}".format(r.status_code))
         return None
 
 
@@ -684,7 +684,7 @@ def delete_environment(cred, envid):
     import requests
 
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     api = "https://gateway.watsonplatform.net/discovery/api/v1/environments"
@@ -694,7 +694,7 @@ def delete_environment(cred, envid):
 
     r = requests.delete(api, params=payload, auth=(cred['username'], cred['password']))
     if args.verbose >= 1:
-        print "DELETE: {0}".format(r.url)
+        print("DELETE: {0}".format(r.url))
 
     return r.text
 
@@ -737,21 +737,21 @@ def create_collection(credentials, envid, name, cfgid, description=None, languag
     r = requests.post(api, json=data, auth=(credentials['username'], credentials['password']))
 
     if args.verbose >= 1:
-        print "POST: {0}".format(r.url)
-        print "DATA: {0}".format(data)
+        print("POST: {0}".format(r.url))
+        print("DATA: {0}".format(data))
 
     if r.status_code == requests.codes.ok or r.status_code == requests.codes.created:
         if args.verbose >= 1:
-            print "{0}: Create Collection succeeded".format(r.status_code)
+            print("{0}: Create Collection succeeded".format(r.status_code))
 
         return r.text
     else:
         if args.verbose >= 1:
-            print "Create Collection Failed: {0}".format(r.status_code)
+            print("Create Collection Failed: {0}".format(r.status_code))
 
         return None
 
-    print "Unknown Error: Create Collection({0})".format(envid)
+    print("Unknown Error: Create Collection({0})".format(envid))
     sys.exit(1)
 
 
@@ -767,11 +767,11 @@ def delete_collection(credentials, envid, colid):
     '''
 
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     if colid is None:
-        print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], envid)
+        print("Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], envid))
         sys.exit(1)
 
     # DELETE /v1/environments/{environment_id}/collections/{collection_id}
@@ -784,7 +784,7 @@ def delete_collection(credentials, envid, colid):
 
     r = requests.delete(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print "DELETE {0}".format(r.url)
+        print("DELETE {0}".format(r.url))
 
     return r.text
 
@@ -803,15 +803,15 @@ def get_valid_id_string(index, id_list, strict=False):
         return id_list[index]
     except IndexError:
         if strict:
-            print "get_valid_id_string: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0])
-            print "  index={0}(>= {2}); id_list={1}".format(index, id_list, len(id_list))
+            print("get_valid_id_string: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0]))
+            print("  index={0}(>= {2}); id_list={1}".format(index, id_list, len(id_list)))
             sys.exit(1)
         else:
             return None
     except TypeError as e:
         if strict:
-            print "get_valid_id_string: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0])
-            print "  index={1}(>= {3}); id_list={2}".format(e, index, id_list, len(id_list))
+            print("get_valid_id_string: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0]))
+            print("  index={1}(>= {3}); id_list={2}".format(e, index, id_list, len(id_list)))
             sys.exit(1)
         else:
             return None
@@ -831,15 +831,15 @@ def upload_document(credentials, envid, colid, file_name):
     import magic
 
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     if colid is None:
-        print "Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], envid)
+        print("Invalid colid, '{0}', hint try: {1} -L collections --envid {2}".format(colid, sys.argv[0], envid))
         sys.exit(1)
 
     if not (os.path.isfile(file_name) and os.access(file_name, os.R_OK)):
-        print "Filename not readable, '{0}'".format(file_name)
+        print("Filename not readable, '{0}'".format(file_name))
         sys.exit(1)
 
 #     POST /v1/environments/{environment_id}/collections/{collection_id}/documents
@@ -847,7 +847,7 @@ def upload_document(credentials, envid, colid, file_name):
 #      -F file=@sample1.html
 #      "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
     if args.verbose:
-        print "upload: envid={0}; colid={1}; fname={2}".format(envid, colid, file_name)
+        print("upload: envid={0}; colid={1}; fname={2}".format(envid, colid, file_name))
 
     api = "https://gateway.watsonplatform.net/discovery/api/v1"
     api += '/environments/' + envid + '/collections/' + colid + '/documents'
@@ -876,8 +876,8 @@ def upload_document(credentials, envid, colid, file_name):
     r = requests.post(api, files=files, auth=(credentials['username'], credentials['password']))
 
     if args.verbose >= 1:
-        print "POST: {0}".format(r.url)
-        print "FILE: {0}".format(file_name)
+        print("POST: {0}".format(r.url))
+        print("FILE: {0}".format(file_name))
 
     # 200 OK - Successful request
     # 202 Accepted - index progressing.
@@ -887,7 +887,7 @@ def upload_document(credentials, envid, colid, file_name):
         return r.text
     else:
         if args.verbose >= 1:
-            print "Upload File Failed: {0}".format(r.status_code)
+            print("Upload File Failed: {0}".format(r.status_code))
         return None
 
 
@@ -906,11 +906,11 @@ def query_document(credentials, envid, colid=None, docid=None, query=None, filte
     :param count: Number of documents to list
     """
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     if colid is None:
-        print "Missing collection_id; hint {0} -L configurations --envid {1}".format(sys.argv[0], envid)
+        print("Missing collection_id; hint {0} -L configurations --envid {1}".format(sys.argv[0], envid))
         sys.exit(1)
 
     # GET /v1/environments/{environment_id}/collections/{collection_id}/documents
@@ -929,11 +929,11 @@ def query_document(credentials, envid, colid=None, docid=None, query=None, filte
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print "GET: {0}".format(r.url)
+        print("GET: {0}".format(r.url))
 
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
-            print "Query Document Failed: {0}".format(r.status_code)
+            print("Query Document Failed: {0}".format(r.status_code))
 
         return None
     else:
@@ -953,11 +953,11 @@ def query_collection(credentials, envid, colid=None, query=None, count=10):
     :param count: Number of documents to list
     """
     if envid is None:
-        print "Invalid envid, '{0}'".format(envid)
+        print("Invalid envid, '{0}'".format(envid))
         sys.exit(1)
 
     if colid is None:
-        print "Missing collection_id; hint {0} -L configurations --envid {1}".format(sys.argv[0], envid)
+        print("Missing collection_id; hint {0} -L configurations --envid {1}".format(sys.argv[0], envid))
         sys.exit(1)
 
     # GET /v1/environments/{environment_id}/collections/{collection_id}/documents
@@ -976,11 +976,11 @@ def query_collection(credentials, envid, colid=None, query=None, count=10):
 
     r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
     if args.verbose >= 1:
-        print "GET: {0}".format(r.url)
+        print("GET: {0}".format(r.url))
 
     if r.status_code != requests.codes.ok:
         if args.verbose >= 1:
-            print "Query Collection Failed: {0}".format(r.status_code)
+            print("Query Collection Failed: {0}".format(r.status_code))
 
         return None
     else:
@@ -997,7 +997,7 @@ def print_environments_list(result, title="Environments:"):
     :param title: Title string
     '''
 
-    print title + os.linesep + ("=" * len(title))
+    print(title + os.linesep + ("=" * len(title)))
 
     values = result
     if isinstance(result, str) or isinstance(result, unicode):
@@ -1005,22 +1005,22 @@ def print_environments_list(result, title="Environments:"):
 
     for i, val in enumerate(values["environments"]):
         if 'environment_id' in val:
-            print "[{0}]: {1[environment_id]}".format(i, val)
-            print "  environment_id: {0[environment_id]}".format(val)
+            print("[{0}]: {1[environment_id]}".format(i, val))
+            print("  environment_id: {0[environment_id]}".format(val))
         else:
-            print "[{0}]:".format(i)
+            print("[{0}]:".format(i))
 
         if 'name' in val:
-            print "  name: {0[name]}".format(val)
+            print("  name: {0[name]}".format(val))
         if 'description' in val:
-            print "  description: {0[description]}".format(val)
+            print("  description: {0[description]}".format(val))
         if 'read_only' in val:
-            print "  read_only: {0[read_only]}".format(val)
+            print("  read_only: {0[read_only]}".format(val))
         if 'created' in val:
-            print "  created: {0[created]}".format(val)
+            print("  created: {0[created]}".format(val))
         if 'updated' in val:
-            print "  updated: {0[updated]}".format(val)
-        print
+            print("  updated: {0[updated]}".format(val))
+        print()
 
     return None
 
@@ -1035,7 +1035,7 @@ def print_configurations_list(result, title="Configurations:"):
     :param title: Title string
     '''
 
-    print title + os.linesep + ("=" * len(title))
+    print(title + os.linesep + ("=" * len(title)))
 
     values = result
     if isinstance(result, str) or isinstance(result, unicode):
@@ -1043,22 +1043,22 @@ def print_configurations_list(result, title="Configurations:"):
 
     for i, val in enumerate(values):
         if 'configuration_id' in val:
-            print "{0:d}: {1[configuration_id]}".format(i, val)
-            print "  configuration_id: {0[configuration_id]}".format(val)
+            print("{0:d}: {1[configuration_id]}".format(i, val))
+            print("  configuration_id: {0[configuration_id]}".format(val))
         else:
-            print "{0:d}:".format(i)
+            print("{0:d}:".format(i))
 
         if 'name' in val:
-            print "  name: {0[name]}".format(val)
+            print("  name: {0[name]}".format(val))
         if 'description' in val:
-            print "  description: {0[description]}".format(val)
+            print("  description: {0[description]}".format(val))
         if 'read_only' in val:
-            print "  read_only: {0[read_only]}".format(val)
+            print("  read_only: {0[read_only]}".format(val))
         if 'created' in val:
-            print "  created: {0[created]}".format(val)
+            print("  created: {0[created]}".format(val))
         if 'updated' in val:
-            print "  updated: {0[updated]}".format(val)
-        print
+            print("  updated: {0[updated]}".format(val))
+        print()
 
     return None
 
@@ -1072,7 +1072,7 @@ def print_collections_list(result, title="Collections:"):
     :param result: Configurations text or object to print
     :param title: Title string
     '''
-    print title + os.linesep + ("=" * len(title))
+    print(title + os.linesep + ("=" * len(title)))
 
     values = result
     if isinstance(result, str) or isinstance(result, unicode):
@@ -1080,25 +1080,25 @@ def print_collections_list(result, title="Collections:"):
 
     for i, val in enumerate(values):
         if 'collection_id' in val:
-            print "{0:d}: {1[collection_id]}".format(i, val)
-            print "  collection_id: {0[collection_id]}".format(val)
+            print("{0:d}: {1[collection_id]}".format(i, val))
+            print("  collection_id: {0[collection_id]}".format(val))
         else:
-            print "{0:d}:".format(i)
+            print("{0:d}:".format(i))
 
         if 'configuration_id' in val:
-            print "  configuration_id: {0[configuration_id]}".format(val)
+            print("  configuration_id: {0[configuration_id]}".format(val))
         if 'name' in val:
-            print "  name: {0[name]}".format(val)
+            print("  name: {0[name]}".format(val))
         if 'status' in val:
-            print "  status: {0[status]}".format(val)
+            print("  status: {0[status]}".format(val))
         if 'language' in val:
-            print "  language: {0[language]}".format(val)
+            print("  language: {0[language]}".format(val))
         if 'created' in val:
-            print "  created: {0[created]}".format(val)
+            print("  created: {0[created]}".format(val))
         if 'updated' in val:
-            print "  updated: {0[updated]}".format(val)
+            print("  updated: {0[updated]}".format(val))
 
-        print
+        print()
 
     return None
 
@@ -1126,37 +1126,37 @@ def print_documents_list(result, title="Documents:"):
 
     document_count = values['matching_results']
     newtitle = title + "(" + str(document_count) + ")"
-    print newtitle + os.linesep + ("=" * len(newtitle))
+    print(newtitle + os.linesep + ("=" * len(newtitle)))
 
     for i, val in enumerate(values['results']):
 
         if 'id' in val:
-            print "{0:d}: {1[id]}".format(i, val)
-            print "  id: {0[id]}".format(val)
+            print("{0:d}: {1[id]}".format(i, val))
+            print("  id: {0[id]}".format(val))
         else:
-            print "{0:d}:".format(i)
+            print("{0:d}:".format(i))
 
         if 'extracted_metadata' in val:
             if 'filename' in val['extracted_metadata']:
-                print "  filename: ",
-                print val['extracted_metadata']['filename']
+                print("  filename: ",)
+                print(val['extracted_metadata']['filename'])
             if 'file_type' in val['extracted_metadata']:
-                print "  file_type: ",
-                print val['extracted_metadata']['file_type']
+                print("  file_type: ",)
+                print(val['extracted_metadata']['file_type'])
             if 'publicationdate' in val['extracted_metadata']:
-                print "  publicationdate: ",
-                print val['extracted_metadata']['publicationdate']
+                print("  publicationdate: ",)
+                print(val['extracted_metadata']['publicationdate'])
             if 'sha1' in val['extracted_metadata']:
-                print "  sha1: ",
-                print val['extracted_metadata']['sha1']
+                print("  sha1: ",)
+                print(val['extracted_metadata']['sha1'])
 
         if 'result_metadata' in val:
             if 'score' in val['result_metadata']:
-                print "  score: {0[score]}".format(val['result_metadata'])
+                print("  score: {0[score]}".format(val['result_metadata']))
 
-        print
+        print()
 
-    print "Showing {0} out of {1} documents".format(len(values['results']), document_count)
+    print("Showing {0} out of {1} documents".format(len(values['results']), document_count))
 
     return None
 
@@ -1170,7 +1170,7 @@ def print_environment(result, title="Environment:"):
     :param result: Configurations text or object to print
     :param title: Title string
     '''
-    print title + os.linesep + ("=" * len(title))
+    print(title + os.linesep + ("=" * len(title)))
 
     # simple Wrapper YAML output
     print_result(result=result, format='YAML')
@@ -1185,7 +1185,7 @@ def print_configuration(result, title="Configuration:"):
     :param result: Configurations text or object to print
     :param title: Title string
     '''
-    print title + os.linesep + ("=" * len(title))
+    print(title + os.linesep + ("=" * len(title)))
 
     # simple Wrapper YAML output
     print_result(result=result, format='YAML')
@@ -1200,7 +1200,7 @@ def print_collection(result, title="Collection:"):
     :param result: Configurations text or object to print
     :param title: Title string
     '''
-    print title + os.linesep + ("=" * len(title))
+    print(title + os.linesep + ("=" * len(title)))
 
     # simple Wrapper YAML output
     print_result(result=result, format='YAML')
@@ -1215,7 +1215,7 @@ def print_document(result, title="Document:"):
     :param result: Configurations text or object to print
     :param title: Title string
     '''
-    print title + os.linesep + ("=" * len(title))
+    print(title + os.linesep + ("=" * len(title)))
 
     # simple Wrapper YAML output
     print_result(result=result, format='YAML')
@@ -1250,7 +1250,7 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--verbose', action='count', default=0)
     args = parser.parse_args()
     if args.verbose >= 1:
-        print "watson-cfg: '{0}'".format(args.auth)
+        print("watson-cfg: '{0}'".format(args.auth))
 
     credentials = get_watson_credentials(args.auth)
     envids = get_environment_ids(credentials=credentials)
@@ -1269,7 +1269,7 @@ if __name__ == "__main__":
 
     if args.list:
         if not (args.list.lower() in list_allowed):
-            print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.list)
+            print("{0}: invalid argument, '{1}'".format(sys.argv[0], args.list))
             sys.exit(1)
 
         command = args.list.lower()
@@ -1280,7 +1280,7 @@ if __name__ == "__main__":
         if command == 'environments':
             result = list_environments(credentials=credentials)
             if result is None:
-                print "No Environments?"
+                print("No Environments?")
                 sys.exit(1)
             elif output_format == 'TEXT':
                 print_result(result=result, callback=print_environments_list)
@@ -1290,9 +1290,9 @@ if __name__ == "__main__":
         elif command == 'configurations':
             result = list_configurations(credentials=credentials, envid=envid, raw=args.raw)
             if result is None:
-                print "No configurations for, '{0}'".format(envid)
+                print("No configurations for, '{0}'".format(envid))
             elif output_format == 'TEXT':
-                print "EnvID: {0}".format(envid)
+                print("EnvID: {0}".format(envid))
                 print_result(result=result, callback=print_configurations_list)
             else:
                 print_result(result=result, format=output_format)
@@ -1300,9 +1300,9 @@ if __name__ == "__main__":
         elif command == 'collections':
             result = list_collections(credentials=credentials, envid=envid, raw=args.raw)
             if result is None:
-                print "No collections for, '{0}'".format(envid)
+                print("No collections for, '{0}'".format(envid))
             elif output_format == 'TEXT':
-                print "EnvID: {0}".format(envid)
+                print("EnvID: {0}".format(envid))
                 print_result(result=result, callback=print_collections_list)
             else:
                 print_result(result=result, format=output_format)
@@ -1313,11 +1313,11 @@ if __name__ == "__main__":
             result = list_documents(credentials=credentials, envid=envid, colid=colid, count=args.count, raw=args.raw)
 
             if result is None:
-                print "{1}Collection: '{0}'".format(colid, args.separator),
-                print "{0}No documents found".format(args.separator),
-                print
+                print("{1}Collection: '{0}'".format(colid, args.separator),)
+                print("{0}No documents found".format(args.separator),)
+                print()
             elif output_format == 'TEXT':
-                print "EnvID: {0}".format(envid)
+                print("EnvID: {0}".format(envid))
                 print_result(result=result, callback=print_documents_list)
             else:
                 print_result(result=result, format=output_format)
@@ -1325,10 +1325,10 @@ if __name__ == "__main__":
         elif command == 'environment':
             result = list_environment(credentials=credentials, envid=envid)
             if result is None:
-                print "EnvID: {0}".format(envid)
-                print "  No documents found"
+                print("EnvID: {0}".format(envid))
+                print("  No documents found")
             elif output_format == 'TEXT':
-                print "EnvID: {0}".format(envid)
+                print("EnvID: {0}".format(envid))
                 print_result(result=result, callback=print_environment)
             else:
                 print_result(result=result, format=output_format)
@@ -1338,10 +1338,10 @@ if __name__ == "__main__":
             cfgid = get_valid_id_string(args.cfgid, cfgids, strict=True)
             result = list_configuration(credentials=credentials, envid=envid, cfgid=cfgid, raw=args.raw)
             if result is None:
-                print "EnvID: {0}".format(envid)
-                print "  No configurations found"
+                print("EnvID: {0}".format(envid))
+                print("  No configurations found")
             elif output_format == 'TEXT':
-                print "EnvID: {0}".format(envid)
+                print("EnvID: {0}".format(envid))
                 print_result(result=result, callback=print_configuration)
             else:
                 print_result(result=result, format=output_format)
@@ -1351,10 +1351,10 @@ if __name__ == "__main__":
             colid = get_valid_id_string(args.colid, colids, strict=True)
             result = list_collection(credentials=credentials, envid=envid, colid=colid)
             if result is None:
-                print "EnvID: {0}".format(envid)
-                print "  No collection found"
+                print("EnvID: {0}".format(envid))
+                print("  No collection found")
             elif output_format == 'TEXT':
-                print "EnvID: {0}".format(envid)
+                print("EnvID: {0}".format(envid))
                 print_result(result=result, callback=print_collection)
             else:
                 print_result(result=result, format=output_format)
@@ -1366,16 +1366,16 @@ if __name__ == "__main__":
             docid = get_valid_id_string(args.docid, docids, strict=True)
             result = list_document(credentials=credentials, envid=envid, colid=colid, docid=docid)
             if result is None:
-                print "EnvID: {0}".format(envid)
-                print "  No document found"
+                print("EnvID: {0}".format(envid))
+                print("  No document found")
             elif output_format == 'TEXT':
-                print "EnvID: {0}".format(envid)
+                print("EnvID: {0}".format(envid))
                 print_result(result=result, callback=print_document)
             else:
                 print_result(result=result, format=output_format)
 
         else:
-            print "Error: invalid List option, '{0}'".format(args.list)
+            print("Error: invalid List option, '{0}'".format(args.list))
             sys.exit(1)
 
     elif args.add:
@@ -1384,19 +1384,19 @@ if __name__ == "__main__":
         colid = get_valid_id_string(args.colid, colids, strict=True)
         result = upload_document(credentials=credentials, envid=envid, colid=colid, file_name=args.add)
         if result is None:
-            print "EnvID: {0}".format(envid)
-            print "  No document found"
+            print("EnvID: {0}".format(envid))
+            print("  No document found")
         elif output_format == 'TEXT':
-            print "EnvID: {0}".format(envid)
+            print("EnvID: {0}".format(envid))
             title = "Add Document: '{0}' (ColID {1})".format(args.add, colid)
-            print title + os.linesep + ("=" * len(title))
+            print(title + os.linesep + ("=" * len(title)))
             print_result(result=result, format="YAML")
         else:
             print_result(result=result, format=output_format)
 
     elif args.create:
         if not (args.create.lower() in create_allowed):
-            print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.list)
+            print("{0}: invalid argument, '{1}'".format(sys.argv[0], args.list))
             sys.exit(1)
 
         command = args.create.lower()
@@ -1409,29 +1409,29 @@ if __name__ == "__main__":
                 cfgid = get_valid_id_string(args.cfgid, cfgids, strict=True)
                 result = create_collection(credentials=credentials, envid=envid, name=args.name, cfgid=cfgid, description=args.description)
             else:
-                print "Invalid {1} '{2}'; hint try {0} -h".format(sys.argv[0], 'create command', command)
-                print " envid={0}; name={1}; cfgid={2}".format(args.envid, args.name, args.cfgid)
+                print("Invalid {1} '{2}'; hint try {0} -h".format(sys.argv[0], 'create command', command))
+                print(" envid={0}; name={1}; cfgid={2}".format(args.envid, args.name, args.cfgid))
                 sys.exit(1)
 
             if result is None:
-                print "EnvID: {0}".format(envid)
-                print "Create {0} '{1}' failed".format(command, args.name)
+                print("EnvID: {0}".format(envid))
+                print("Create {0} '{1}' failed".format(command, args.name))
                 sys.exit(1)
             elif output_format == 'TEXT':
-                print "EnvID: {0}".format(envid)
+                print("EnvID: {0}".format(envid))
                 title = "Create {0} '{1}' succeeded".format(command, args.name)
-                print title + os.linesep + ("=" * len(title))
+                print(title + os.linesep + ("=" * len(title)))
                 print_result(result=result, format="YAML")
             else:
                 print_result(result=result, format=output_format)
 
         else:
-            print "Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0])
+            print("Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0]))
             sys.exit(1)
 
     elif args.delete:
         if not (args.delete.lower() in delete_allowed):
-            print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.delete)
+            print("{0}: invalid argument, '{1}'".format(sys.argv[0], args.delete))
             sys.exit(1)
 
         command = args.delete.lower()
@@ -1445,7 +1445,7 @@ if __name__ == "__main__":
                     colid = get_valid_id_string(args.colid, colids, strict=True)
                     result = delete_collection(credentials=credentials, envid=envid, colid=colid)
                 else:
-                    print "DELETE: {0}, No collections found?".format(command)
+                    print("DELETE: {0}, No collections found?".format(command))
                     sys.exit(1)
             elif command == 'document':
                 colids = get_collections_ids(credentials=credentials, envid=envid)
@@ -1457,27 +1457,27 @@ if __name__ == "__main__":
                         docid = get_valid_id_string(args.docid, docids, strict=True)
                         result = delete_document(credentials=credentials, envid=envid, colid=colid, docid=docid)
                     else:
-                        print "DELETE: No document found?"
+                        print("DELETE: No document found?")
                         sys.exit(1)
                 else:
-                    print "DELETE: {0}, No collections found?".format(command)
+                    print("DELETE: {0}, No collections found?".format(command))
                     sys.exit(1)
 
             if result is None:
-                print "EnvID: {0}".format(envid)
-                print "Delete {0} failed".format(command)
+                print("EnvID: {0}".format(envid))
+                print("Delete {0} failed".format(command))
                 sys.exit(1)
             elif output_format == 'TEXT':
-                print "EnvID: {0}".format(envid)
+                print("EnvID: {0}".format(envid))
                 title = "Delete {0} succeeded".format(command)
-                print title + os.linesep + ("=" * len(title))
+                print(title + os.linesep + ("=" * len(title)))
                 print_result(result=result, format="YAML")
             else:
                 print_result(result=result, format=output_format)
 
     elif args.query:
         if not (args.query.lower() in query_allowed):
-            print"{0}: invalid argument, '{1}'".format(sys.argv[0], args.query)
+            print("{0}: invalid argument, '{1}'".format(sys.argv[0], args.query))
             sys.exit(1)
 
         command = args.query.lower()
@@ -1489,7 +1489,7 @@ if __name__ == "__main__":
                     colid = get_valid_id_string(args.colid, colids, strict=True)
                     result = query_collection(credentials=credentials, envid=envid, colid=colid, count=args.count)
                 else:
-                    print "QUERY: {0}, No collections found?".format(command)
+                    print("QUERY: {0}, No collections found?".format(command))
                     sys.exit(1)
             elif command == 'document':
                 colids = get_collections_ids(credentials=credentials, envid=envid)
@@ -1501,27 +1501,27 @@ if __name__ == "__main__":
                         docid = get_valid_id_string(args.docid, docids, strict=True)
                         result = query_document(credentials=credentials, envid=envid, colid=colid, docid=docid)
                     else:
-                        print "QUERY: {0}, No documents found?".format(command)
+                        print("QUERY: {0}, No documents found?".format(command))
                         sys.exit(1)
                 else:
-                    print "QUERY: {0}, No collections found?".format(command)
+                    print("QUERY: {0}, No collections found?".format(command))
                     sys.exit(1)
 
             if result is None:
-                print "EnvID: {0}".format(envid)
-                print "Query {0} failed".format(command)
+                print("EnvID: {0}".format(envid))
+                print("Query {0} failed".format(command))
                 sys.exit(1)
             elif output_format == 'TEXT':
-                print "EnvID: {0}".format(envid)
+                print("EnvID: {0}".format(envid))
                 title = "Query {0} succeeded".format(command)
-                print title + os.linesep + ("=" * len(title))
+                print(title + os.linesep + ("=" * len(title)))
                 print_result(result=result, format="YAML")
             else:
                 print_result(result=result, format=output_format)
 
     else:
-        print "Unknown command"
-        print parser.print_usage()
+        print("Unknown command")
+        print(parser.print_usage())
         sys.exit(1)
 
     sys.exit(0)

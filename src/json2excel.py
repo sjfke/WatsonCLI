@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 import argparse
@@ -21,7 +21,7 @@ def extract_data(src):
     Extract data from discovery JSON
     :param src: source filename
     '''
-    # print "SRC: {0}".format(src)
+    # print("SRC: {0}".format(src))
 
     extracted_data = {'entities': [], 'concepts': [], 'keywords': [], 'categories': []}
     with open(src) as f:
@@ -184,10 +184,10 @@ if __name__ == "__main__":
     src = args.file.lower()
     dst = args.file.lower().replace('json', 'xls')
     data = extract_data(src=src)
-    # print data
+    # print(data)
     # sys.exit(0)
 
     result = write_excel(data=data, dst=dst)
-    # print result
+    # print(result)
 
     sys.exit(0)
