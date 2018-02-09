@@ -1,11 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 import json
 import yaml
 import requests
 import os
 import logging
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 
 logging.basicConfig(format='%(asctime) %(message)s')
 
