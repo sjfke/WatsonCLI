@@ -7,8 +7,7 @@ import os
 import logging
 from configparser import SafeConfigParser
 
-logging.basicConfig(format='%(asctime) %(message)s')
-
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.ERROR)
 
 class WDSObject:
     '''
@@ -316,10 +315,11 @@ class WDSObject:
         # ]}
         id_list = []
         documents = self.get_documents(envid=envid, colid=colid, count=count)
+              
         if documents is not None:
             document = json.loads(documents)
-            if documents["matching_results"] > count:
-                logging.warning("Only {0} out of {1} document ids returned".format(count, documents["matching_results"]))
+            if document['matching_results'] > count:
+                logging.warning("Only {0} out of {1} document ids returned".format(count, document["matching_results"]))
 
             for d in document['results']:
                 id_list.append(d['id'])
@@ -755,7 +755,7 @@ class WDSObject:
 
         payload['version'] = self.__version
 
-        r = requests.get(api, params=payload, auth=(credentials['username'], credentials['password']))
+        r = requests.get(api, params=payload, auth=(self.__username, self.__password))
         logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:

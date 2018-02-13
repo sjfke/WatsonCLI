@@ -111,6 +111,8 @@ src/.ptp-sync-folder
 src/.watson.cfg
 
 # don't put credentials in github
+src/.gc.watson.json
+src/.gc.watson.cfg
 src/.gmail.watson.cfg
 src/.ymail.watson.cfg
 src/.mm.watson.cfg
