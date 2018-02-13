@@ -95,10 +95,10 @@ def cleanse_features(feature_str):
         if len(matched) >= 1:
             result_str = ','.join(matched)
         else:
-            print "Warning: Using Default Features '{0}'".format(result_str)
+            print("Warning: Using Default Features '{0}'".format(result_str))
 
     if args.verbose >= 1:
-        print 'result_str: ' + result_str
+        print('result_str: ' + result_str)
 
     return result_str
 
@@ -131,17 +131,17 @@ def nlu_post_analyze_json(cfg, url=None, json_file=None, text_file=None):
         try:
             data = json.load(f)
         except ValueError as e:
-            print "{0}:".format(json_file)
-            print "   ValueError: {0}".format(e)
+            print("{0}:".format(json_file))
+            print("   ValueError: {0}".format(e))
             sys.exit(1)
         except:
-            print "{0}:".format(json_file)
-            print "   Unexpected error: ", sys.exc_info()[0]
+            print("{0}:".format(json_file))
+            print("   Unexpected error: ", sys.exc_info()[0])
             sys.exit(1)
 
     if not data:
-        print "{0}:".format(json_file)
-        print "   File has no JSON content"
+        print("{0}:".format(json_file))
+        print("   File has no JSON content")
         sys.exit(1)
 
     if text_file:
@@ -196,14 +196,14 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--verbose', action='count', default=0)
     args = parser.parse_args()
     if args.verbose >= 1:
-        print "watson-cfg: '{0}'".format(args.cfg)
+        print("watson-cfg: '{0}'".format(args.cfg))
 
     if args.json:
         result = nlu_post_analyze_json(cfg=args.cfg, url=args.url, json_file=args.json, text_file=args.filename)
-        print result
+        print(result)
     else:
         features = cleanse_features(args.features)  # may enforce default 'sentiment,keywords'
         result = nlu_get_analyze(cfg=args.cfg, url=args.url, text_file=args.filename, features=features)
-        print result
+        print(result)
 
     sys.exit(0)

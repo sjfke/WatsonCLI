@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 import argparse
 import codecs
@@ -180,11 +179,15 @@ if __name__ == "__main__":
 
     src = args.file.lower()
     dst = args.file.lower().replace('json', 'xls')
+    
+    if args.verbose:
+        print("Reading JSON file, {0}".format(src))
+        
     data = extract_data(src=src)
-    # print(data)
-    # sys.exit(0)
+    
+    if args.verbose:
+        print("Writing Excel file, {0}".format(dst))
 
     result = write_excel(data=data, dst=dst)
-    # print(result)
 
     sys.exit(0)
