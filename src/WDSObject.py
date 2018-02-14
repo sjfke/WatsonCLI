@@ -9,6 +9,7 @@ from configparser import SafeConfigParser
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.ERROR)
 
+
 class WDSObject:
     '''
     Simplistic access to IBM Watson Discovery Service
@@ -315,7 +316,7 @@ class WDSObject:
         # ]}
         id_list = []
         documents = self.get_documents(envid=envid, colid=colid, count=count)
-              
+
         if documents is not None:
             document = json.loads(documents)
             if document['matching_results'] > count:
@@ -743,6 +744,9 @@ class WDSObject:
             logging.critical("Invalid docid, '{0}'".format(docid))
             return None
 
+        if query is not None:
+            logger.warning("JSON Queries not yet support")
+
         # GET /v1/environments/{environment_id}/collections/{collection_id}/documents
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
@@ -782,6 +786,9 @@ class WDSObject:
         if colid is None:
             logging.critical("Invalid colid, '{0}'".format(colid))
             return None
+
+        if query is not None:
+            logger.warning("JSON Queries not yet support")
 
         # GET /v1/environments/{environment_id}/collections/{collection_id}/documents
         # curl -u "{username}":"{password}"
