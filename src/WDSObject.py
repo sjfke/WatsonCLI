@@ -21,6 +21,7 @@ class WDSObject:
     def __init__(self, filename):
         self.__username = None
         self.__password = None
+        self.__account = 'nobody@nowhere.com'
         self.__version = '2017-11-07'
         self.__url = 'https://gateway.watsonplatform.net/discovery/api'
 
@@ -45,6 +46,8 @@ class WDSObject:
                         self.__username = d[1]
                     if d[0] == 'password':
                         self.__password = d[1]
+                    if d[0] == 'account':
+                        self.__account = d[1]
                     if d[0] == 'url':
                         self.__url = d[1]
                     if d[0] == 'version':
@@ -76,6 +79,15 @@ class WDSObject:
         Return Watson Discovery Service Password
         '''
         return self.__password
+
+    #===========================================================================
+    # account
+    #===========================================================================
+    def account(self):
+        '''
+        Return Watson Discovery Service Account Name
+        '''
+        return self.__account
 
     #===========================================================================
     # url
