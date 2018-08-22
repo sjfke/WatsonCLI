@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
-import sys
 import json
-import yaml
-import requests
-import os
 import logging
-from configparser import SafeConfigParser
+import os
+import sys
+
+import requests
+import yaml
+
+from WDSAccess import WDSAccess
+
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.ERROR)
 
 
-class WDSObject:
+class WDSObject(WDSAccess):
     '''
     Simplistic access to IBM Watson Discovery Service
     '''
@@ -18,94 +21,10 @@ class WDSObject:
     # __init__
     #===========================================================================
 
-    def __init__(self, filename):
-        self.__username = None
-        self.__password = None
-        self.__account = 'nobody@nowhere.com'
-        self.__version = '2017-11-07'
-        self.__url = 'https://gateway.watsonplatform.net/discovery/api'
-
-        with open(filename) as f:
-            try:
-                data = json.loads(f.read())
-                if 'username' in data:
-                    self.__username = data['username']
-                if 'password' in data:
-                    self.__password = data['password']
-                if 'url' in data:
-                    self.__url = data['url']
-                if 'version' in data:
-                    self.__version = data['version']
-
-            except ValueError:
-                config = SafeConfigParser()
-                config.read(filename)
-                data = config.items('discovery')
-                for d in data:
-                    if d[0] == 'username':
-                        self.__username = d[1]
-                    if d[0] == 'password':
-                        self.__password = d[1]
-                    if d[0] == 'account':
-                        self.__account = d[1]
-                    if d[0] == 'url':
-                        self.__url = d[1]
-                    if d[0] == 'version':
-                        self.__version = d[1]
-
-    #===========================================================================
-    # credentials
-    #===========================================================================
-    def credentials(self):
-        '''
-        Return Watson Discovery Service Credentials
-        '''
-        return {'username': self.__username, 'password': self.__password, 'url': self.__url, 'version': self.__version}
-
-    #===========================================================================
-    # username
-    #===========================================================================
-    def username(self):
-        '''
-        Return Watson Discovery Service username
-        '''
-        return self.__username
-
-    #===========================================================================
-    # password
-    #===========================================================================
-    def password(self):
-        '''
-        Return Watson Discovery Service Password
-        '''
-        return self.__password
-
-    #===========================================================================
-    # account
-    #===========================================================================
-    def account(self):
-        '''
-        Return Watson Discovery Service Account Name
-        '''
-        return self.__account
-
-    #===========================================================================
-    # url
-    #===========================================================================
-    def url(self):
-        '''
-        Return Watson Discovery Service API URL
-        '''
-        return self.__url
-
-    #===========================================================================
-    # version
-    #===========================================================================
-    def version(self):
-        '''
-        Return Watson Discovery Service Version
-        '''
-        return self.__version
+    def __init__(self, filename, url='https://gateway.watsonplatform.net/discovery/api/v1', version='2017-11-07'):
+        super().__init__(filename)
+        super().set_url(url)
+        super().set_version(version)
 
     #===============================================================================
     # get_environments
@@ -115,11 +34,11 @@ class WDSObject:
          Return Watson Discovery Environments
         :param raw: unformatted JSON result
         """
-        api = self.__url + '/v1/environments'
+        api = self.url + '/environments'
         payload = {}
-        payload['version'] = self.__version
+        payload['version'] = self.version
 
-        r = requests.get(api, params=payload, auth=(self.__username, self.__password))
+        r = requests.get(api, params=payload, auth=(self.username, self.password))
         logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
@@ -154,11 +73,11 @@ class WDSObject:
 
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/configurations?version=2017-11-07"
-        api = self.__url + '/v1/environments/' + envid + '/configurations'
+        api = self.url + '/environments/' + envid + '/configurations'
         payload = {}
-        payload['version'] = self.__version
+        payload['version'] = self.version
 
-        r = requests.get(api, params=payload, auth=(self.__username, self.__password))
+        r = requests.get(api, params=payload, auth=(self.username, self.password))
         logging.debug("GET: {}".format(r.url))
 
         if r.status_code != requests.codes.ok:
@@ -213,11 +132,11 @@ class WDSObject:
         # https://www.ibm.com/watson/developercloud/discovery/api/v1/?curl#create-collection
         # curl -u "{username}":"{password}" \
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections?version=2017-11-07"
-        api = self.__url + '/v1/environments/' + envid + '/collections'
+        api = self.url + '/environments/' + envid + '/collections'
         payload = {}
-        payload['version'] = self.__version
+        payload['version'] = self.version
 
-        r = requests.get(api, params=payload, auth=(self.__username, self.__password))
+        r = requests.get(api, params=payload, auth=(self.username, self.password))
         logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
@@ -279,13 +198,13 @@ class WDSObject:
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/query?return=extracted_metadata&version=2017-11-07"
 
-        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid + '/query'
+        api = self.url + '/environments/' + envid + '/collections/' + colid + '/query'
         payload = {}
         payload['return'] = 'extracted_metadata'
         payload['count'] = count
-        payload['version'] = self.__version
+        payload['version'] = self.version
 
-        r = requests.get(api, params=payload, auth=(self.__username, self.__password))
+        r = requests.get(api, params=payload, auth=(self.username, self.password))
         logging.debug("list_documents: GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
@@ -331,7 +250,7 @@ class WDSObject:
 
         if documents is not None:
             document = json.loads(documents)
-            if document['matching_results'] > count:
+            if count is not None and (document['matching_results'] > count):
                 logging.warning("Only {0} out of {1} document ids returned".format(count, document["matching_results"]))
 
             for d in document['results']:
@@ -368,11 +287,11 @@ class WDSObject:
         # curl -X DELETE -u "{username}":"{password}"
         #  "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}?version=2017-11-07"
 
-        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid + '/documents/' + docid
+        api = self.url + '/environments/' + envid + '/collections/' + colid + '/documents/' + docid
         payload = {}
-        payload['version'] = self.__version
+        payload['version'] = self.version
 
-        r = requests.delete(api, params=payload, auth=(self.__username, self.__password))
+        r = requests.delete(api, params=payload, auth=(self.username, self.password))
         logging.debug("DELETE: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
@@ -401,11 +320,11 @@ class WDSObject:
         # GET /v1/environments/{environment_id}
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}?version=2017-11-07"
-        api = self.__url + '/v1/environments/' + envid
+        api = self.url + '/environments/' + envid
         payload = {}
-        payload['version'] = self.__version
+        payload['version'] = self.version
 
-        r = requests.get(api, params=payload, auth=(self.__username, self.__password))
+        r = requests.get(api, params=payload, auth=(self.username, self.password))
         logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
@@ -434,11 +353,11 @@ class WDSObject:
         # GET /v1/environments/{environment_id}/configurations/{configuration_id}
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/configurations/{configuration_id}?version=2017-11-07"
-        api = self.__url + '/v1/environments/' + envid + '/configurations/' + cfgid
+        api = self.url + '/environments/' + envid + '/configurations/' + cfgid
         payload = {}
-        payload['version'] = self.__version
+        payload['version'] = self.version
 
-        r = requests.get(api, params=payload, auth=(self.__username, self.__password))
+        r = requests.get(api, params=payload, auth=(self.username, self.password))
         logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
@@ -467,11 +386,11 @@ class WDSObject:
         # GET /v1/environments/{environment_id}/collections/{collection_id}
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}?version=2017-11-07"
-        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid
+        api = self.url + '/environments/' + envid + '/collections/' + colid
         payload = {}
-        payload['version'] = self.__version
+        payload['version'] = self.version
 
-        r = requests.get(api, params=payload, auth=(self.__username, self.__password))
+        r = requests.get(api, params=payload, auth=(self.username, self.password))
         logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
@@ -505,11 +424,11 @@ class WDSObject:
         # GET /v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents/{document_id}?version=2017-11-07"
-        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid + '/documents/' + docid
+        api = self.url + '/environments/' + envid + '/collections/' + colid + '/documents/' + docid
         payload = {}
-        payload['version'] = self.__version
+        payload['version'] = self.version
 
-        r = requests.get(api, params=payload, auth=(self.__username, self.__password))
+        r = requests.get(api, params=payload, auth=(self.username, self.password))
         logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
@@ -544,14 +463,14 @@ class WDSObject:
         :param name: mandatory environment name
         :param descr: optional environment description
         """
-        api = self.__url + '/v1/environments/' + '?version=' + self.__version
+        api = self.url + '/environments/' + '?version=' + self.version
 
         if name is None:
             logging.critical("Environment needs a name, {0}".format(name))
             return None
 
         data = {'name': name, 'description': descr}
-        r = requests.post(api, json=data, auth=(self.__username, sel.__password))
+        r = requests.post(api, json=data, auth=(self.username, self.password))
 
         logging.debug("POST: {0}".format(r.url))
         logging.debug("JSON: {0}".format(data))
@@ -574,11 +493,11 @@ class WDSObject:
             logging.critical("Invalid envid, '{0}'".format(envid))
             return None
 
-        api = self.__url + '/v1/environments/' + envid
+        api = self.url + '/environments/' + envid
         payload = {}
-        payload['version'] = self.__version
+        payload['version'] = self.version
 
-        r = requests.delete(api, params=payload, auth=(self.__username, self.__password))
+        r = requests.delete(api, params=payload, auth=(self.username, self.password))
         logging.debug("DELETE: {0}".format(r.url))
 
         return r.text
@@ -619,11 +538,11 @@ class WDSObject:
         #   "language": "en"
         # }
 
-        api = self.__url + '/v1/environments/' + envid + '/collections'
-        api += '?version=' + self.__version
+        api = self.url + '/environments/' + envid + '/collections'
+        api += '?version=' + self.version
 
         data = {'name': name, 'description': description, 'configuration_id': cfgid, 'language': language}
-        r = requests.post(api, json=data, auth=(self.__username, self.__password))
+        r = requests.post(api, json=data, auth=(self.username, self.password))
 
         logging.debug("POST: {0}".format(r.url))
         logging.debug("DATA: {0}".format(data))
@@ -655,11 +574,11 @@ class WDSObject:
         # DELETE /v1/environments/{environment_id}/collections/{collection_id}
         # curl -u "{username}":"{password}" -X DELETE
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}?version=2017-11-07"
-        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid
+        api = self.url + '/environments/' + envid + '/collections/' + colid
         payload = {}
-        payload['version'] = self.__version
+        payload['version'] = self.version
 
-        r = requests.delete(api, params=payload, auth=(credentials['username'], credentials['password']))
+        r = requests.delete(api, params=payload, auth=(self.username, self.password))
         logging.debug("DELETE {0}".format(r.url))
         return r.text
 
@@ -693,8 +612,8 @@ class WDSObject:
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
         logging.debug("upload: envid={0}; colid={1}; fname={2}".format(envid, colid, file_name))
 
-        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid + '/documents'
-        api += '?version=' + self.__version
+        api = self.url + '/environments/' + envid + '/collections/' + colid + '/documents'
+        api += '?version=' + self.version
 
         # Supported formats (50 MB max).
         # application/json,
@@ -716,7 +635,7 @@ class WDSObject:
                 pass
 
         files = {'file': (os.path.basename(file_name), open(file_name, 'rb'), mime_type, {'Expires': 0})}
-        r = requests.post(api, files=files, auth=(credentials['username'], credentials['password']))
+        r = requests.post(api, files=files, auth=(self.username, self.password))
 
         logging.debug("POST: {0}".format(r.url))
         logging.debug("FILE: {0}".format(file_name))
@@ -763,15 +682,15 @@ class WDSObject:
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/query?return=extracted_metadata&version=2017-11-07"
-        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid + '/query'
+        api = self.url + '/environments/' + envid + '/collections/' + colid + '/query'
         payload = {}
         payload['filter'] = '_id:"' + docid + '"'
         if filtered:
             payload['return'] = 'enriched_text.concepts,enriched_text.keywords,enriched_text.entities,enriched_text.categories'
 
-        payload['version'] = self.__version
+        payload['version'] = self.version
 
-        r = requests.get(api, params=payload, auth=(self.__username, self.__password))
+        r = requests.get(api, params=payload, auth=(self.username, self.password))
         logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
@@ -806,14 +725,14 @@ class WDSObject:
         # curl -u "{username}":"{password}"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/documents?version=2017-11-07"
         # "https://gateway.watsonplatform.net/discovery/api/v1/environments/{environment_id}/collections/{collection_id}/query?return=extracted_metadata&version=2017-11-07"
-        api = self.__url + '/v1/environments/' + envid + '/collections/' + colid + '/query'
+        api = self.url + '/environments/' + envid + '/collections/' + colid + '/query'
         payload = {}
         payload['filter'] = 'enriched_text.entities.type::"Company"'
         payload['return'] = 'enriched_text.concepts,enriched_text.keywords,enriched_text.entities,enriched_text.categories'
         payload['count'] = count
-        payload['version'] = self.__version
+        payload['version'] = self.version
 
-        r = requests.get(api, params=payload, auth=(self.__username, self.__password))
+        r = requests.get(api, params=payload, auth=(self.username, self.password))
         logging.debug("GET: {0}".format(r.url))
 
         if r.status_code != requests.codes.ok:
@@ -828,16 +747,24 @@ class WDSObject:
     @staticmethod
     def get_valid_id_string(index, id_list, strict=False):
         '''
-        Return a valid collection_id string, trapping any list index errors
+        Return a valid watson_id string, trapping any list index errors
         :param index: index
         :param id_list: list of valid id_strings
         :param strict: return None or exit if no match
         '''
         try:
+            if index is None:
+                if strict:
+                    logging.critical("get_valid_id_string: Invalid Index".format(sys.argv[0]))
+                    logging.critical("  index={0}(>= {2}); id_list={1}".format(index, id_list, len(id_list)))
+                    sys.exit(1)
+                else:
+                    return None
+
             return id_list[index]
         except IndexError:
             if strict:
-                logging.critical("get_valid_id_string: Invalid Index; hint try {0} -L collections --envid <envid>".format(sys.argv[0]))
+                logging.critical("get_valid_id_string: Invalid Index".format(sys.argv[0]))
                 logging.critical("  index={0}(>= {2}); id_list={1}".format(index, id_list, len(id_list)))
                 sys.exit(1)
             else:

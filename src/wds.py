@@ -1,25 +1,26 @@
 #!/usr/bin/env python3
 #
 import argparse
-import codecs
-import os
-import re
-import sys
 import json
+import os
+
+import sys
+
 import yaml
 
+from CommandObject import CommandObject
 from WDSObject import WDSObject
+
 
 #===============================================================================
 # print_result
 #===============================================================================
-
-
-def print_result(result, format='JSON', callback=None):
+def print_result(result, format='JSON', title=None, callback=None):
     '''
     Print result (string, list) in JSON, YAML or TEXT (callback) format
     :param result: the result (JSON) string to display
     :param format: JSON, YAML, TEXT (use callback)
+    :param title: text heading
     :param callback: custom printing routine
     '''
     if result is None:
@@ -27,7 +28,9 @@ def print_result(result, format='JSON', callback=None):
             print("print_result: 'string' is None")
         return
 
-    # TODO: This is overly complex and needs to be redone, values needs to be a sane JSON string thats all.
+    if title:
+        print(title)
+
     if isinstance(result, str):
         values = json.dumps(json.loads(result), sort_keys=True, indent=4, separators=(',', ': '))
     else:
@@ -46,9 +49,9 @@ def print_result(result, format='JSON', callback=None):
 
 
 #===============================================================================
-# print_environments_list
+# list_environments
 #===============================================================================
-def print_environments_list(result, title="Environments:"):
+def list_environments(result, title="Environments:"):
     '''
     Print Environments List in Human Format
     :param result: Environments text or object to print
@@ -84,9 +87,9 @@ def print_environments_list(result, title="Environments:"):
 
 
 #===============================================================================
-# print_configurations_list
+# list_configurations
 #===============================================================================
-def print_configurations_list(result, title="Configurations:"):
+def list_configurations(result, title="Configurations:"):
     '''
     Print Configurations List in Human Format
     :param result: Configurations text or object to print
@@ -122,9 +125,9 @@ def print_configurations_list(result, title="Configurations:"):
 
 
 #===============================================================================
-# print_collections_list
+# list_collections
 #===============================================================================
-def print_collections_list(result, title="Collections:"):
+def list_collections(result, title="Collections:"):
     '''
     Print Collections List
     :param result: Configurations text or object to print
@@ -162,9 +165,9 @@ def print_collections_list(result, title="Collections:"):
 
 
 #===============================================================================
-# print_documents_list
+# list_documents
 #===============================================================================
-def print_documents_list(result, title="Documents:"):
+def list_documents(result, title="Documents:"):
     '''
     Print Documents List
     :param result: Configurations text or object to print
@@ -174,13 +177,6 @@ def print_documents_list(result, title="Documents:"):
     values = result
     if isinstance(result, str):
         values = json.loads(result)
-
-    if isinstance(result, unicode):
-        values = json.loads(result)
-        # http://pythonhosted.org/kitchen/unicode-frustrations.html
-        # https://stackoverflow.com/questions/21129020/how-to-fix-unicodedecodeerror-ascii-codec-cant-decode-byte
-        UTF8Writer = codecs.getwriter('utf8')
-        sys.stdout = UTF8Writer(sys.stdout)
 
     document_count = values['matching_results']
     newtitle = title + "(" + str(document_count) + ")"
@@ -196,16 +192,16 @@ def print_documents_list(result, title="Documents:"):
 
         if 'extracted_metadata' in val:
             if 'filename' in val['extracted_metadata']:
-                print("  filename: ",)
+                print("  filename: ", end='')
                 print(val['extracted_metadata']['filename'])
             if 'file_type' in val['extracted_metadata']:
-                print("  file_type: ",)
+                print("  file_type: ", end='')
                 print(val['extracted_metadata']['file_type'])
             if 'publicationdate' in val['extracted_metadata']:
-                print("  publicationdate: ",)
+                print("  publicationdate: ", end='')
                 print(val['extracted_metadata']['publicationdate'])
             if 'sha1' in val['extracted_metadata']:
-                print("  sha1: ",)
+                print("  sha1: ", end='')
                 print(val['extracted_metadata']['sha1'])
 
         if 'result_metadata' in val:
@@ -220,9 +216,9 @@ def print_documents_list(result, title="Documents:"):
 
 
 #===============================================================================
-# print_environment
+# list_environment
 #===============================================================================
-def print_environment(result, title="Environment:"):
+def list_environment(result, title="Environment:"):
     '''
     Print the Environment
     :param result: Configurations text or object to print
@@ -235,9 +231,9 @@ def print_environment(result, title="Environment:"):
 
 
 #===============================================================================
-# print_configuration
+# list_configuration
 #===============================================================================
-def print_configuration(result, title="Configuration:"):
+def list_configuration(result, title="Configuration:"):
     '''
     Print the Configuration
     :param result: Configurations text or object to print
@@ -250,9 +246,9 @@ def print_configuration(result, title="Configuration:"):
 
 
 #===============================================================================
-# print_collection
+# list_collection
 #===============================================================================
-def print_collection(result, title="Collection:"):
+def list_collection(result, title="Collection:"):
     '''
     Print the Collection
     :param result: Configurations text or object to print
@@ -265,9 +261,9 @@ def print_collection(result, title="Collection:"):
 
 
 #===============================================================================
-# print_document
+# list_document
 #===============================================================================
-def print_document(result, title="Document:"):
+def list_document(result, title="Document:"):
     '''
     Print the Document
     :param result: Configurations text or object to print
@@ -315,281 +311,26 @@ if __name__ == "__main__":
         print("wds-cfg: '{0}'".format(wds_cfg_file))
 
     wds = WDSObject(wds_cfg_file)
-
     if wds is None:
         print("Failed to create Watson Discovery Object")
         sys.exit(1)
 
-    envids = wds.get_environment_ids()
-
-    sub_commands = {}
-    sub_commands['create'] = ['environment', 'collection']
-    sub_commands['delete'] = ['environment', 'configuration', 'collection', 'document']
-    sub_commands['list'] = ['environments', 'configurations', 'collections', 'documents', 'environment', 'configuration', 'collection', 'document']
-    sub_commands['delete'] = ['environment', 'configuration', 'collection', 'document']
-    sub_commands['query'] = ['collection', 'document']
-
-    output_format = 'TEXT'
-    if args.json:
-        output_format = 'JSON'
-    if args.yaml:
-        output_format = 'YAML'
-
-    if args.list:
-        if not (args.list.lower() in sub_commands['list']):
-            print("{0}: invalid argument, '{1}'".format(sys.argv[0], args.list))
-            sys.exit(1)
-
-        command = args.list.lower()
-
-        if command != 'environments':
-            envid = wds.get_valid_id_string(args.envid, envids, strict=True)
-
-        if command == 'environments':
-            result = wds.get_environments()
-            if result is None:
-                print("No Environments?")
-                sys.exit(1)
-            elif output_format == 'TEXT':
-                print_result(result=result, callback=print_environments_list)
-            else:
-                print_result(result=result, format=output_format)
-
-        elif command == 'configurations':
-            result = wds.get_configurations(envid=envid, raw=args.raw)
-            if result is None:
-                print("No configurations for, '{0}'".format(envid))
-            elif output_format == 'TEXT':
-                print("EnvID: {0}".format(envid))
-                print_result(result=result, callback=print_configurations_list)
-            else:
-                print_result(result=result, format=output_format)
-
-        elif command == 'collections':
-            result = wds.get_collections(envid=envid, raw=args.raw)
-            if result is None:
-                print("No collections for, '{0}'".format(envid))
-            elif output_format == 'TEXT':
-                print("EnvID: {0}".format(envid))
-                print_result(result=result, callback=print_collections_list)
-            else:
-                print_result(result=result, format=output_format)
-
-        elif command == 'documents':
-            colids = wds.get_collections_ids(envid)
-            colid = wds.get_valid_id_string(args.colid, colids, strict=True)
-            result = wds.get_documents(envid=envid, colid=colid, count=args.count)
-
-            if result is None:
-                print("Collection: '{0}'".format(colid),)
-                print("  No documents found".format(),)
-                print()
-            elif output_format == 'TEXT':
-                print("EnvID: {0}".format(envid))
-                print_result(result=result, callback=print_documents_list)
-            else:
-                print_result(result=result, format=output_format)
-
-        elif command == 'environment':
-            result = wds.get_environment(envid=envid)
-            if result is None:
-                print("EnvID: {0}".format(envid))
-                print("  No documents found")
-            elif output_format == 'TEXT':
-                print("EnvID: {0}".format(envid))
-                print_result(result=result, callback=print_environment)
-            else:
-                print_result(result=result, format=output_format)
-
-        elif command == 'configuration':
-            cfgids = wds.get_configuration_ids(envid)
-            cfgid = wds.get_valid_id_string(args.cfgid, cfgids, strict=True)
-            result = wds.get_configuration(envid=envid, cfgid=cfgid)
-            if result is None:
-                print("EnvID: {0}".format(envid))
-                print("  No configurations found")
-            elif output_format == 'TEXT':
-                print("EnvID: {0}".format(envid))
-                print_result(result=result, callback=print_configuration)
-            else:
-                print_result(result=result, format=output_format)
-
-        elif command == 'collection':
-            colids = wds.get_collections_ids(envid)
-            colid = wds.get_valid_id_string(args.colid, colids, strict=True)
-            result = wds.get_collection(envid=envid, colid=colid)
-            if result is None:
-                print("EnvID: {0}".format(envid))
-                print("  No collection found")
-            elif output_format == 'TEXT':
-                print("EnvID: {0}".format(envid))
-                print_result(result=result, callback=print_collection)
-            else:
-                print_result(result=result, format=output_format)
-
-        elif command == 'document':
-            colids = wds.get_collections_ids(envid)
-            colid = wds.get_valid_id_string(args.colid, colids, strict=True)
-            docids = wds.get_document_ids(envid=envid, colid=colid, count=args.count)
-            docid = wds.get_valid_id_string(args.docid, docids, strict=True)
-            result = wds.get_document(envid=envid, colid=colid, docid=docid)
-            if result is None:
-                print("EnvID: {0}".format(envid))
-                print("  No document found")
-            elif output_format == 'TEXT':
-                print("EnvID: {0}".format(envid))
-                print_result(result=result, callback=print_document)
-            else:
-                print_result(result=result, format=output_format)
-
-        else:
-            print("Error: invalid List option, '{0}'".format(args.list))
-            sys.exit(1)
-
-    elif args.add:
-        envid = wds.get_valid_id_string(args.envid, envids, strict=True)
-        colids = wds.get_collections_ids(envid=envid)
-        colid = wds.get_valid_id_string(args.colid, colids, strict=True)
-        result = wds.upload_document(envid=envid, colid=colid, file_name=args.add)
-        if result is None:
-            print("EnvID: {0}".format(envid))
-            print("  No document found")
-        elif output_format == 'TEXT':
-            print("EnvID: {0}".format(envid))
-            title = "Add Document: '{0}' (ColID {1})".format(args.add, colid)
-            print(title + os.linesep + ("=" * len(title)))
-            print_result(result=result, format="YAML")
-        else:
-            print_result(result=result, format=output_format)
-
-    elif args.create:
-        if not (args.create.lower() in sub_commqnds['create']):
-            print("{0}: invalid argument, '{1}'".format(sys.argv[0], args.list))
-            sys.exit(1)
-
-        command = args.create.lower()
-        if args.envid is not None:
-            envid = envids[args.envid]
-            if command == 'environment':
-                result = wds.create_environment(name=args.create, descr=args.description)
-            elif command == 'collection':
-                cfgids = wds.get_configuration_ids(envid=envid)
-                cfgid = wds.get_valid_id_string(args.cfgid, cfgids, strict=True)
-                result = wds.create_collection(envid=envid, name=args.name, cfgid=cfgid, description=args.description)
-            else:
-                print("Invalid {1} '{2}'; hint try {0} -h".format(sys.argv[0], 'create command', command))
-                print(" envid={0}; name={1}; cfgid={2}".format(args.envid, args.name, args.cfgid))
-                sys.exit(1)
-
-            if result is None:
-                print("EnvID: {0}".format(envid))
-                print("Create {0} '{1}' failed".format(command, args.name))
-                sys.exit(1)
-            elif output_format == 'TEXT':
-                print("EnvID: {0}".format(envid))
-                title = "Create {0} '{1}' succeeded".format(command, args.name)
-                print(title + os.linesep + ("=" * len(title)))
-                print_result(result=result, format="YAML")
-            else:
-                print_result(result=result, format=output_format)
-
-        else:
-            print("Error: invalid envid='{0}'; try {1} -L environments".format(args.envid, sys.argv[0]))
-            sys.exit(1)
-
-    elif args.delete:
-        if not (args.delete.lower() in sub_commqnds['delete']):
-            print("{0}: invalid argument, '{1}'".format(sys.argv[0], args.delete))
-            sys.exit(1)
-
-        command = args.delete.lower()
-        if args.envid is not None:
-            envid = wds.get_valid_id_string(args.envid, envids, strict=True)
-            if command == 'environment':
-                result = wds.delete_environment(envid=envid)
-            elif command == 'collection':
-                colids = wds.get_collections_ids(envid=envid)
-                if colids:
-                    colid = wds.get_valid_id_string(args.colid, colids, strict=True)
-                    result = wds.delete_collection(envid=envid, colid=colid)
-                else:
-                    print("DELETE: {0}, No collections found?".format(command))
-                    sys.exit(1)
-            elif command == 'document':
-                colids = wds.get_collections_ids(envid=envid)
-                if colids:
-                    colid = wds.get_valid_id_string(args.colid, colids, strict=True)
-                    docids = wds.get_document_ids(envid=envid, colid=colid, count=args.count)
-
-                    if docids:
-                        docid = wds.get_valid_id_string(args.docid, docids, strict=True)
-                        result = wds.delete_document(envid=envid, colid=colid, docid=docid)
-                    else:
-                        print("DELETE: No document found?")
-                        sys.exit(1)
-                else:
-                    print("DELETE: {0}, No collections found?".format(command))
-                    sys.exit(1)
-
-            if result is None:
-                print("EnvID: {0}".format(envid))
-                print("Delete {0} failed".format(command))
-                sys.exit(1)
-            elif output_format == 'TEXT':
-                print("EnvID: {0}".format(envid))
-                title = "Delete {0} succeeded".format(command)
-                print(title + os.linesep + ("=" * len(title)))
-                print_result(result=result, format="YAML")
-            else:
-                print_result(result=result, format=output_format)
-
-    elif args.query:
-        if not (args.query.lower() in sub_commands['query']):
-            print("{0}: invalid argument, '{1}'".format(sys.argv[0], args.query))
-            sys.exit(1)
-
-        command = args.query.lower()
-        if args.envid is not None:
-            envid = envids[args.envid]
-            if command == 'collection':
-                colids = wds.get_collections_ids(envid=envid)
-                if colids:
-                    colid = wds.get_valid_id_string(args.colid, colids, strict=True)
-                    result = wds.query_collection(envid=envid, colid=colid, count=args.count)
-                else:
-                    print("QUERY: {0}, No collections found?".format(command))
-                    sys.exit(1)
-            elif command == 'document':
-                colids = wds.get_collections_ids(envid=envid)
-                if colids:
-                    colid = wds.get_valid_id_string(args.colid, colids, strict=True)
-                    docids = wds.get_document_ids(envid=envid, colid=colid, count=args.count)
-
-                    if docids:
-                        docid = wds.get_valid_id_string(args.docid, docids, strict=True)
-                        result = wds.query_document(envid=envid, colid=colid, docid=docid)
-                    else:
-                        print("QUERY: {0}, No documents found?".format(command))
-                        sys.exit(1)
-                else:
-                    print("QUERY: {0}, No collections found?".format(command))
-                    sys.exit(1)
-
-            if result is None:
-                print("EnvID: {0}".format(envid))
-                print("Query {0} failed".format(command))
-                sys.exit(1)
-            elif output_format == 'TEXT':
-                print("EnvID: {0}".format(envid))
-                title = "Query {0} succeeded".format(command)
-                print(title + os.linesep + ("=" * len(title)))
-                print_result(result=result, format="YAML")
-            else:
-                print_result(result=result, format=output_format)
-
-    else:
-        print("Unknown command")
-        print(parser.print_usage())
+    cmd = CommandObject(args)
+    if not cmd.validate(wds=wds):
+        print("ERROR: failed to execute '{0}'".format(cmd.command_name))
         sys.exit(1)
+
+    result = cmd.execute(wds=wds)
+    title = None
+    if cmd.output_format == 'TEXT':
+        if cmd.envid_str:
+            title = "EnvID: {0}".format(cmd.envid_str)
+
+        if cmd.command_name in {'create_environment', 'create_collection', 'delete_collection', 'delete_document', 'query_collection', 'query_document'}:
+            print_result(result=result, title=title, format='YAML')
+        else:
+            print_result(result=result, title=title, callback=eval(cmd.command_name))
+    else:
+        print_result(result=result, title=title, format=cmd.output_format)
 
     sys.exit(0)
