@@ -6,13 +6,13 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-certifi = {version="*"}
-chardet = {version="*"}
-idna = {version="*"}
-requests = {version="*"}
-urllib3 = {version="*"}
-xlwt = {version="*"}
-PyYAML = {version="*"}
+certifi = {version = "*"}
+chardet = {version = "*"}
+idna = {version = "*"}
+requests = {version = "*"}
+urllib3 = {version = "*"}
+xlwt = {version = "*"}
+PyYAML = {version = ">=4.2b"}
 
 [requires]
 python_version = "3.7"
