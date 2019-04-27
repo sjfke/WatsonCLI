@@ -37,3 +37,12 @@ optional arguments:
   -j, --json            JSON output
   -y, --yaml            YAML output
   -v, --verbose
+```
+
+# ChangeLog
+
+## GitHub Security update 2019.04.19
+ 
+* Known high severity security vulnerability detected in urllib3 < 1.24.2 defined in Pipfile.lock.
+* Pipfile.lock update suggested: urllib3 ~> 1.24.2. 
+ 
