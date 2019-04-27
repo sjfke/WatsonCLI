@@ -38,7 +38,6 @@ optional arguments:
   -y, --yaml            YAML output
   -v, --verbose
 
- 
 # ChangeLog
 
 ## 2019.04.19 GitHub Security update
