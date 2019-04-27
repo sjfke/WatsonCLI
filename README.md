@@ -38,9 +38,9 @@ optional arguments:
   -y, --yaml            YAML output
   -v, --verbose
 
-  
-# ChangeLog
  
+# ChangeLog
+
 ## 2019.04.19 GitHub Security update
  
 * Known high severity security vulnerability detected in urllib3 < 1.24.2 defined in Pipfile.lock.
