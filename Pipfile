@@ -10,9 +10,6 @@ certifi = {version = "*"}
 chardet = {version = "*"}
 idna = {version = "*"}
 requests = {version = "*"}
-urllib3 = {version = ">=1.24.2"}
+urllib3 = {version = ">=1.25.9"}
 xlwt = {version = "*"}
-PyYAML = {version = ">=4.2b"}
-
-[requires]
-python_version = "3.7"
+PyYAML = {version = ">=5.4"}
